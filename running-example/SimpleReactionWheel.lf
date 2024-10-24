@@ -1,0 +1,74 @@
+/**
+ * To get a compact diagram for this program, set layout to "Full Control" and
+ * set spacing to 30%.
+ *
+ * @author Tassilo
+ * @author Shaokai
+ */
+target C {
+    scheduler: STATIC,
+    workers: 3,
+    timeout: 810 weeks, // 15 years of lifetime
+}
+preamble {=
+    typedef int command_t;
+=}
+/**
+ * According to this site, gyroscopes operate at 6.6 kHz (i.e., with a period of ~152us).
+ * https://support.sbg-systems.com/sc/imu/latest/user-manual/sampling-and-sensors-specifications
+ */
+reactor Gyroscope(period=150us) {
+    timer t(5 sec, period)
+    output out: float
+    @wcet("80 usec")
+    reaction(t) -> out {==}
+}
+/**
+ * If the angular rate sensor is ADXRS300 from ANALOG DEVICES, then the sensor
+ * resonant frequency is 14 kHz (i.e., with a period of ~72us).
+ * https://www.analog.com/media/en/technical-documentation/data-sheets/ADXRS300.pdf
+ */
+reactor AngularRateSensor(period=75us) {
+    output out: float
+    timer t(5 sec, period)
+    @wcet("20 usec")
+    reaction(t) -> out {==}
+}
+reactor Controller(period=150us) {
+    input in0: float
+    input in1: float
+    input in2: float
+    output out0: float
+    output out1: {=command_t=}
+    @wcet("15 usec")
+    reaction(in0) {==}    
+    @wcet("15 usec")
+    reaction(in1) -> out0 {==}
+    @wcet("25 usec")
+    reaction(in2) -> out1 {==}
+    @wcet("10 minute")
+    reaction(shutdown) {==}
+}
+/**
+ * We would likely use a stepper motor here. A closed loop stepper driver can
+ * have a maximum driver pulse input frequency of 200 kHz (i.e., a period of 5 usec!).
+ * https://www.amazon.com/gp/product/B08Q79YTQW/ref=ppx_yo_dt_b_search_asin_title?ie=UTF8&psc=1
+ */
+reactor Motor(freq: float=1000.0) {
+    input in:{=command_t=}
+    @wcet("3 sec")
+    reaction(startup) {==}
+    @wcet("15 usec")
+    reaction(in) {==}
+}
+main reactor {
+    ars = new AngularRateSensor()
+    gyro = new Gyroscope()
+    controller = new Controller()
+    motor = new Motor()
+    gyro.out -> controller.in1
+    ars.out -> controller.in0
+    controller.out0 -> controller.in2 after 100 usec
+    controller.out1 -> motor.in
+}
+

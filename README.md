@@ -1,1 +1,1 @@
-# pretvm-artifacts
+# Artifacts for the PRET Virtual Machine paper

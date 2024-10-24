@@ -1,0 +1,217 @@
+/**
+ * Micro-benchmark from the Savina benchmark suite, intended
+ * to measure message passing overhead and switching between
+ * actors.
+ * See https://shamsimam.github.io/papers/2014-agere-savina.pdf.
+ *
+ * To open the causality loop in the ring of reactors one
+ * reactor uses a logical action for message passing.
+ *
+ * @author Matthew Chorlian
+ * @author Tassilo Tanneberger
+ */
+
+/* [[[cog
+# This file is a code generator using the python module cog:
+# See https://nedbatchelder.com/code/cog/
+#
+# All instructions for code  generation are in-lined in comments
+# like this one. With that you can use this file as a normal source file
+# but also to generate code.
+#
+# To change the generated code in-line within this file run:
+# $ python -m cog -r this-file.lf
+# To generate a new file from this file stripping the generator code in the process run:
+# $ python -m cog -d -o output-file.lf this-file.lf
+#
+# Use the command line option -D to specify generator parameters, for example:
+# $ python -m cog -r -D parameter=100 this-file.lf
+#
+# Generator parameters used in this file:
+# -D numReactors=100
+# -D numPings = 100000
+]]] */
+// [[[end]]]
+
+/* [[[cog
+  # force existence, type and default values of generator parameters
+  if 'numReactors' in globals():
+    numReactors = int(numReactors)
+  else:
+    globals()['numReactors'] = 100
+
+  # output the current value of the generator parameters used in the last generation run
+  cog.outl(f'// Generated file with the following parameters:')
+  cog.outl(f'// numReactors = {numReactors}')
+  cog.outl(f'// numPings = {numPings}')
+
+
+]]] */
+// Generated file with the following parameters:
+// numReactors = 100
+// numPings = 100000
+// [[[end]]]
+
+target C {
+    /* [[[cog
+      if (threading=="True"):
+          cog.outl("single-threaded: false,")
+          cog.outl(f"workers: {workers},")
+          cog.outl(f"scheduler: {scheduler},")
+      else:
+          cog.outl("single-threaded: true,")
+    ]]] */
+    // single-threaded: true,
+    /// [[[end]]]
+    files: ["../../savina/src/include/benchmark_runner.h"],
+    timeout: 4000 msec,
+    workers: 1,
+};
+
+import BenchmarkRunner from "../../savina/src/BenchmarkRunner.lf";
+
+preamble {=
+    #include "benchmark_runner.h"
+    static int ping;
+
+    static bool hasNext(int ping) {
+        if (ping > 0) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    static int getPingsLeft(int ping) {
+        return ping;
+    }
+
+    static int ping_next(int ping) {
+        return ping - 1;
+    }
+=}
+
+reactor ThreadRingReactor {
+    output outNextReactor:int;
+    input inPrevReactor:int;
+    // input start:int; // Unused.
+    output finished:bool;
+    state pingNext:int;
+
+    @wcet("5 usec")
+    reaction(inPrevReactor) -> outNextReactor, finished {=
+        if (hasNext(inPrevReactor->value)) {
+            self->pingNext = ping_next(inPrevReactor->value);
+            lf_set(outNextReactor, self->pingNext);
+        } else {
+            lf_set_present(finished);
+            lf_print("Finished with count %d", getPingsLeft(inPrevReactor->value));
+        }
+    =}
+
+    // The start input port is unconnected, so let's comment it out.
+    // reaction(start) -> outNextReactor, finished {=
+    //     if (hasNext(start->value)) {
+    //         self->pingNext = ping_next(start->value);
+    //         lf_set(outNextReactor, self->pingNext);
+    //         lf_print("Starting with count %d", getPingsLeft(start->value));
+    //     } else {
+    //         lf_set_present(finished);
+    //     }
+    // =}
+}
+
+realtime reactor ThreadRingReactorLoopOpener {
+
+    output outNextReactor:int;
+    input inPrevReactor:int;
+    input start:int;
+    output finished:bool;
+
+    // following ports replace logical action sendToNextReactor:int;
+    input sendToNextReactorInput: int;
+    output sendToNextReactorOutput: int;
+
+    state pingNext:int;
+
+    // this is where the loop terminates as of right now
+    @wcet("5 usec")
+    reaction(sendToNextReactorInput) -> outNextReactor {=
+        lf_set(outNextReactor, sendToNextReactorInput->value);
+    =}
+
+    @wcet("6 usec")
+    reaction(inPrevReactor) -> sendToNextReactorOutput, finished {=
+        if (hasNext(inPrevReactor->value)) {
+            self->pingNext = ping_next(inPrevReactor->value);
+            lf_set(sendToNextReactorOutput, self->pingNext);
+        } else {
+            lf_set_present(finished);
+            lf_print("Finished with count %d",  getPingsLeft(inPrevReactor->value));
+        }
+    =}
+
+    @wcet("10 usec")
+    reaction(start) -> sendToNextReactorOutput, finished {=
+        lf_print("Starting with count %d", getPingsLeft(start->value));
+        if (hasNext(start->value)) {
+            self->pingNext = ping_next(start->value);
+            lf_set(sendToNextReactorOutput, self->pingNext);
+        } else {
+            lf_set_present(finished);
+        }
+    =}
+}
+
+reactor Initializer(numReactors:size_t=100, numPings:size_t=100000) {
+
+    input inStart:bool;
+    output outFinished:bool;
+
+    output outStart:int;
+
+    input inFinished0:bool;
+    input inFinished1:bool;
+    input inFinished2:bool;
+    input inFinished3:bool;
+
+    @wcet("10 usec")
+    reaction(inStart) -> outStart {=
+        lf_set(outStart, self->numPings);
+    =}
+
+    @wcet("5 usec")
+    reaction(inFinished0, inFinished1, inFinished2, inFinished3) -> outFinished {=
+        lf_set_present(outFinished);
+    =}
+}
+
+main reactor (numIterations:size_t=12, numPings:size_t=1000, numReactors:size_t=100) {
+
+    init = new Initializer(numReactors=numReactors, numPings=numPings);
+    
+    runner = new BenchmarkRunner(num_iterations=numIterations);
+    runner.doneOut -> runner.doneIn;
+    runner.nextIterationOut -> runner.nextIterationIn after 50 msec;
+
+    runner.start -> init.inStart;
+    init.outFinished -> runner.finish;
+    
+    loopOpener = new ThreadRingReactorLoopOpener();
+    loopOpener.sendToNextReactorOutput -> loopOpener.sendToNextReactorInput after 50 msec;
+
+    worker0 = new ThreadRingReactor();
+    worker1 = new ThreadRingReactor();
+    worker2 = new ThreadRingReactor();
+
+    loopOpener.outNextReactor -> worker0.inPrevReactor;
+    worker0.outNextReactor -> worker1.inPrevReactor;
+    worker1.outNextReactor -> worker2.inPrevReactor;
+    worker2.outNextReactor -> loopOpener.inPrevReactor;
+
+    init.outStart -> loopOpener.start;
+    loopOpener.finished -> init.inFinished0;
+    worker0.finished -> init.inFinished1;
+    worker1.finished -> init.inFinished2;
+    worker2.finished -> init.inFinished3;
+}

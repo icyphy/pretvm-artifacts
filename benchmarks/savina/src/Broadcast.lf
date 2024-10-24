@@ -1,0 +1,43 @@
+target C;
+
+
+reactor BroadcastBool {
+    input in:bool
+    output out0:bool
+    output out1:bool
+    output out2:bool
+    output out3:bool
+    output out4: bool;
+    output out5: bool;
+    output out6: bool;
+    output out7: bool;
+    output out8: bool;
+    output out9: bool;
+    output out10: bool;
+    reaction(in) -> out0, out1, out2, out3, out4, out5, out6, out7, out8, out9, out10 {=
+        lf_set_present(out0);
+        lf_set_present(out1);
+        lf_set_present(out2);
+        lf_set_present(out3);
+        lf_set_present(out4);
+        lf_set_present(out5);
+        lf_set_present(out6);
+        lf_set_present(out7);
+        lf_set_present(out8);
+        lf_set_present(out9);
+        lf_set_present(out10);
+    =}
+}
+
+
+reactor BroadcastInt {
+    input in:int;
+    output out0: int
+    output out1: int
+    output out2: int
+    reaction(in) -> out0, out1, out2 {=
+        lf_set_present(out0);
+        lf_set_present(out1);
+        lf_set_present(out2);
+    =}
+}

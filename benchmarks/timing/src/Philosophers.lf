@@ -1,0 +1,314 @@
+/**
+ * Copyright (C) 2020 TU Dresden and UC Berkeley
+ *
+ * For more details on this benchmark, see the Cpp version from which it was derived:
+ * https://github.com/lf-lang/benchmarks-lingua-franca/blob/main/Cpp/Savina/src/concurrency/Philosophers.lf.
+ *
+ * @author Christian Menard
+ * @author Edward A. Lee
+ */
+target C {
+    /* [[[cog
+      if (threading=="True"):
+          cog.outl("single-threaded: false,")
+          cog.outl(f"workers: {workers},")
+          cog.outl(f"scheduler: {scheduler},")
+      else:
+          cog.outl("single-threaded: true,")
+    ]]] */
+    //single-threaded: true,
+    /// [[[end]]]
+    // logging: DEBUG,
+    // build-type: Debug,
+    timeout: 4800200 usec,
+    workers: 2,
+}
+
+import BenchmarkRunner from "../../savina/src/BenchmarkRunner.lf";
+
+preamble {=
+    #include <string.h>
+=}
+
+
+reactor Philosopher(
+    bank_index:size_t=0,     // Instance number in a bank of reactors.
+    count:size_t=10000    // Having eaten this many times, send finished.
+) {
+    input start: bool;
+    output finished:bool;
+
+    input eat:bool;
+    input denied:bool;
+    output hungry:bool;
+    output done:bool;
+
+    state times_eaten:int;
+
+    @wcet("10000 nsec")
+    reaction(start) -> hungry {=
+        // printf("(%lld) ", lf_time_logical_elapsed());
+        // lf_print("Hello! I am philosopher %zu, and I am very hungry!", self->bank_index);
+        self->times_eaten = 0;
+        lf_set(hungry, true);
+    =}
+
+    @wcet("10000 nsec")
+    reaction(eat) -> done, finished, hungry {=
+        // printf("(%lld) ", lf_time_logical_elapsed());
+        // ... take left and right fork
+        self->times_eaten++;
+        // lf_print("Philosopher %zu is eating. (%d times)", self->bank_index, self->times_eaten);
+        lf_set(done, true);
+
+        if (self->times_eaten == self->count) {
+            lf_set(finished, true);
+        } else {
+            lf_set(hungry, true);
+        }
+    =}
+
+    @wcet("10000 nsec")
+    reaction(denied) -> hungry {=
+        // printf("(%lld) ", lf_time_logical_elapsed());
+        // lf_print("Philosopher %zu was denied and is thinking.", self->bank_index);
+
+        // Well, I will just try again...
+        lf_set(hungry, true);
+    =}
+}
+
+reactor Arbitrator(num_philosophers:size_t=2) {
+
+    preamble {=
+        /*
+         * Try to acquire both forks for a philosopher. Returns true if
+         * successful and false otherwise.
+         */
+        bool acquire_forks(bool forks[], size_t instance, size_t num_philosophers) {
+            size_t left = instance;
+            size_t right = (instance + 1) % num_philosophers;
+            if (forks[left] || forks[right]) {
+                // someone else has access to the forks
+                return false;
+            } else {
+                // Forks are available. Mark them in use.
+                forks[left] = true;
+                forks[right] = true;
+                return true;
+            }
+        }
+
+        /*
+         * Release the forks acquired by a philosopher. This does not perform
+         * any checks!
+         */
+         void free_forks(bool forks[], size_t instance, size_t num_philosophers) {
+            forks[instance] = false; // left
+            forks[(instance + 1) % num_philosophers] = false; // right
+         }
+
+         enum Reply {
+            INVALID = 0,
+            EAT = 1,
+            DENIED = 2,
+        };
+    =}
+
+    input start: bool;
+
+    output allFinished:bool;
+
+    /** Signal from philosopher that it has eaten enough times in the iteration. */
+    input finished0:bool;
+    input finished1:bool;
+    /** Signal from philosopher that it is ready to eat. */
+    input hungry0:bool;
+    input hungry1:bool;
+    /** Signal from philosopher that it is done eating. */
+    input done0:bool;
+    input done1:bool;
+    /** Signal to philosopher to start eating. */
+    output eat0:bool;
+    output eat1:bool;
+    /** Signal to philosopher to wait. */
+    output denied0:bool;
+    output denied1:bool;
+
+    state forks:bool[];
+    state replies:int[];
+    state finished_philosophers:size_t=0;
+    state arbitration_id:size_t=0;
+    state retries:size_t=0;
+
+    //logical action send_replies;
+
+    input send_replies_in: int;
+    output send_replies_out: int;
+
+    @wcet("10000 nsec")
+    reaction(startup) {=
+        // printf("(%lld) ", lf_time_logical_elapsed());
+        // lf_print("Arbitrator: reaction_1");
+        self->forks = calloc(self->num_philosophers, sizeof(bool));
+        self->replies = calloc(self->num_philosophers, sizeof(int));
+    =}
+
+    @wcet("10000 nsec")
+    reaction(start) {=
+        // printf("(%lld) ", lf_time_logical_elapsed());
+        // lf_print("Arbitrator: reaction_2");
+        self->finished_philosophers = 0;
+        self->retries = 0;
+        self->arbitration_id = 0;
+        memset(self->replies, INVALID, sizeof(int) * self->num_philosophers);
+        memset(self->forks, INVALID, sizeof(bool) * self->num_philosophers);
+    =}
+
+    @wcet("10000 nsec")
+    reaction(send_replies_in) -> eat0, eat1, denied0, denied1 {=
+        // printf("(%lld) ", lf_time_logical_elapsed());
+        // lf_print("Arbitrator: reaction_3");
+        // lf_print("Inside send_replies_in");
+        if (self->replies[0] == EAT) {
+            // lf_print("Tell 0 to EAT");
+            lf_set(eat0, true);
+        } else if (self->replies[0] == DENIED) {
+            // lf_print("Tell 0 to be DENIED");
+            lf_set(denied0, true);
+        }
+
+        if (self->replies[1] == EAT) {
+            // lf_print("Tell 1 to EAT");
+            lf_set(eat1, true);
+        } else if (self->replies[1] == DENIED) {
+            // lf_print("Tell 1 to be DENIED");
+            lf_set(denied1, true);
+        } 
+
+        memset(self->replies, INVALID, sizeof(int) * self->num_philosophers);
+    =}
+
+    @wcet("10000 nsec")
+    reaction(hungry0, hungry1) -> send_replies_out {=
+        // printf("(%lld) ", lf_time_logical_elapsed());
+        // lf_print("Arbitrator: reaction_4");
+        // Iterate over all philosophers, each time starting from a different one.
+        // This arbitration ensures that no philosopher has to starve.
+        // lf_print("(%lld)", lf_time_logical_elapsed());
+        // lf_print("handling hungries\n");
+        if (hungry0->is_present) {
+            // lf_print("hungry 0 present");
+            if (acquire_forks(self->forks, 0, self->num_philosophers)) {
+                // lf_print("Let 0 EAT");
+                self->replies[0] = EAT;
+            } else {
+                // lf_print("Let 0 be DENIED");
+                self->replies[0] = DENIED;
+                self->retries++;
+            }
+        }
+
+        if (hungry1->is_present) {
+            // lf_print("hungry 1 present");
+            if (acquire_forks(self->forks, 1, self->num_philosophers)) {
+                // lf_print("Let 1 EAT");
+                self->replies[1] = EAT;
+            } else {
+                // lf_print("Let 1 be DENIED");
+                self->replies[1] = DENIED;
+                self->retries++;
+            }
+        }
+
+        self->arbitration_id++;
+        if (self->arbitration_id == self->num_philosophers) {
+            self->arbitration_id = 0;
+        }
+        lf_set(send_replies_out, 0);
+    =}
+
+    @wcet("10000 nsec")
+    reaction (finished0, finished1) -> allFinished {=
+        // printf("(%lld) ", lf_time_logical_elapsed());
+        // lf_print("Arbitrator: reaction_5");
+        // lf_print("finished %i %i", finished0->is_present, finished1->is_present);
+        if (finished0->is_present) {
+            self->finished_philosophers++;
+        }
+        if (finished1->is_present) {
+            self->finished_philosophers++;
+        }
+        if (self->num_philosophers == self->finished_philosophers) {
+            printf("Arbitrator: All philosophers are sated. Number of denials to philosophers: %zu\n", self->retries);
+            lf_set(allFinished, true);
+        }
+    =}
+
+    @wcet("10000 nsec")
+    reaction(done0, done1) {=
+        // printf("(%lld) ", lf_time_logical_elapsed());
+        // lf_print("Arbitrator: reaction_6");
+        if (done0->is_present) {
+            free_forks(self->forks, 0, self->num_philosophers);
+        }
+        if (done1->is_present) {
+            free_forks(self->forks, 1, self->num_philosophers);
+        }
+        // lf_print("Arbitrator: done with reaction_6");
+    =}
+}
+
+reactor Broadcast {
+    input in:bool
+    output out0:bool
+    output out1:bool
+    output out2:bool
+    
+    @wcet("10000 nsec")
+    reaction(in) -> out0, out1, out2 {=
+        // printf("(%lld) ", lf_time_logical_elapsed());
+        // lf_print("Broadcast: reaction_1");
+        lf_set_present(out0);
+        lf_set_present(out1);
+        lf_set_present(out2);
+    =}
+}
+
+/* [[[cog
+  cog.outl(f"main reactor Philosophers(numIterations:size_t={numIterations}, num_philosophers:size_t={numPhilosophers}, count:size_t={numEatingRounds}) {{")
+]]] */
+main reactor Philosophers(numIterations:size_t=12, num_philosophers:size_t=2, count:size_t=300) {
+/// [[[end]]]
+    arbitrator = new Arbitrator(num_philosophers = num_philosophers);
+    arbitrator.send_replies_out -> arbitrator.send_replies_in after 200 usec
+
+    philosopher0 = new Philosopher(count=count, bank_index=0);
+    philosopher1 = new Philosopher(count=count, bank_index=1);
+    
+    runner = new BenchmarkRunner(num_iterations=numIterations);
+    runner.nextIterationOut -> runner.nextIterationIn after 200 usec
+    runner.doneOut -> runner.doneIn
+
+    broadcast = new Broadcast()
+    runner.start -> broadcast.in
+    broadcast.out0 -> arbitrator.start
+    broadcast.out1 -> philosopher0.start
+    broadcast.out2 -> philosopher1.start
+
+    arbitrator.allFinished -> runner.finish;
+
+    arbitrator.eat0 -> philosopher0.eat;
+    arbitrator.eat1 -> philosopher1.eat;
+    arbitrator.denied0 -> philosopher0.denied;
+    arbitrator.denied1 -> philosopher1.denied;
+
+    philosopher0.hungry -> arbitrator.hungry0;
+    philosopher1.hungry -> arbitrator.hungry1;
+
+    philosopher0.done -> arbitrator.done0;
+    philosopher1.done -> arbitrator.done1;
+
+    philosopher0.finished -> arbitrator.finished0;
+    philosopher1.finished -> arbitrator.finished1;
+}

@@ -1,0 +1,193 @@
+/**
+ * Parallelism benchmark from the Savina benchmark suite.
+ * See https://shamsimam.github.io/papers/2014-agere-savina.pdf.
+ *
+ * This is the C version of Hannes Klein's implementation of this
+ * benchmark for the Cpp target. Adapted from
+ * github.com/hnnskl/lingua-franca/blob/dev-savina-cpp/benchmark/Cpp/Savina/trapezoid/TrapezoidalBenchmarkGenerator.lf
+ *
+ * This version also does not use the BenchmarkRunner.
+ *
+ * @author Hannes Klein
+ * @author Soroush Bateni
+ * @author Shaokai Lin
+ */
+
+target C {
+    /* [[[cog
+      if (threading=="True"):
+          cog.outl("single-threaded: false,")
+          cog.outl(f"workers: {workers},")
+          cog.outl(f"scheduler: {scheduler},")
+      else:
+          cog.outl("single-threaded: true,")
+    ]]] */
+    //single-threaded: true,
+    /// [[[end]]]
+    files: ["../include/benchmark_runner.h"],
+    compiler-flags: "-lm",
+    //fast: true
+    scheduler: STATIC,
+    timeout: 12000100 nsec
+};
+
+import BenchmarkRunner from "../BenchmarkRunner.lf";
+preamble {=
+    #include <stdio.h>
+    #include "benchmark_runner.h"
+    typedef struct WorkMessage {
+
+      double l;
+      double r;
+      double h;
+    } WorkMessage;
+=}
+
+reactor Master(numWorkers:int=2, L:double=1.0, R:double=5.0, N:int=10000000) {
+
+    state numTermsReceived:int=0;
+    state resultArea:double=0.0;
+
+    //output[numWorkers] outWorkers:WorkMessage;
+    output outWorker0: WorkMessage;
+    output outWorker1: WorkMessage;
+
+    output finished: bool;
+    //input[numWorkers] inWorkers:double;
+    input inWorker0: double;
+    input inWorker1: double;
+
+    input start: bool;
+
+    //logical action sendWorkMessages;
+    input sendWorkMessagesIn: int;
+    output sendWorkMessagesOut: int;
+
+    reaction(start) -> sendWorkMessagesOut {=
+
+        // reset local state
+        self->numTermsReceived = 0;
+        self->resultArea = 0.0;
+
+        // start execution
+        lf_set(sendWorkMessagesOut, 0);
+    =}
+
+    reaction(sendWorkMessagesIn) -> outWorker0, outWorker1 {=
+
+        double workerRange = (self->R - self->L) / self->numWorkers;
+        double precision = (self->R - self->L) / self->N;
+
+        double wl;         
+        double wr;
+        wl = (workerRange * 0) + self->L;
+        wr = wl + workerRange;
+
+        lf_set(outWorker0, ((WorkMessage){wl,wr,precision}));
+        
+        wl = (workerRange * 1) + self->L;
+        wr = wl + workerRange;
+
+        lf_set(outWorker1, ((WorkMessage){wl,wr,precision}));
+    =}
+
+    reaction(inWorker0, inWorker1) -> finished {=
+
+        if(inWorker0->is_present) {
+            self->numTermsReceived += 1;
+            self->resultArea += inWorker0->value;
+        }
+        if(inWorker1->is_present) {
+            self->numTermsReceived += 1;
+            self->resultArea += inWorker1->value;
+        }
+
+        if(self->numTermsReceived == self->numWorkers) {
+            printf("Area: %f.\n", self->resultArea);
+            lf_set(finished, true);
+        }
+    =}
+}
+
+reactor Worker(instance:size_t=0) {
+
+    preamble {=
+        #include <math.h>
+
+        // the function to integrate
+        double fx(double x) {
+
+            double a = sin(pow(x, 3.0) - 1);
+            double b = x + 1;
+            double c = a / b;
+            double d = sqrt(1.0 + exp(sqrt(2 * x)));
+            double r = c * d;
+            return r;
+        }
+    =}
+
+    input inMaster:WorkMessage;
+    output outMaster:double;
+
+    reaction(inMaster) -> outMaster {=
+
+        double r = inMaster->value.r;
+        double l = inMaster->value.l;
+        double h = inMaster->value.h;
+        int n = (int)( ((r - l) / h) );
+        double accumArea = 0.0;
+
+        int i = 0;
+        while(i < n) {
+            double lx = (i * h) + l;
+            double rx = lx + h;
+
+            double ly = fx(lx);
+            double ry = fx(rx);
+
+            double area = 0.5 * (ly + ry) * h;
+            accumArea += area;
+
+            i += 1;
+        }
+
+        lf_set(outMaster, accumArea);
+    =}
+}
+
+/* [[[cog
+    cog.outl(f'main reactor Trapezoidal(numIterations:int={numIterations}, numWorkers:int={worker_reactors}, numPieces:int={pieces}, leftEndPoint:double={left}, rightEndPoint:double={right})')
+]]] */
+    main reactor Trapezoidal(numIterations:int=12, numWorkers:int=100, numPieces:int=10000000, leftEndPoint:double=1.0, rightEndPoint:double=5.0)
+
+// [[[end]]]
+{
+
+    runner = new BenchmarkRunner(num_iterations=numIterations);
+    runner.nextIterationOut -> runner.nextIterationIn after 1nsec;
+    runner.doneOut -> runner.doneIn after 1nsec;
+
+    master = new Master(numWorkers=2, L=leftEndPoint, R=rightEndPoint, N=numPieces);
+    master.sendWorkMessagesOut -> master.sendWorkMessagesIn after 1nsec;
+
+    worker0 = new Worker(instance=0);
+    worker1 = new Worker(instance=1);
+
+    reaction(startup) {=
+        printBenchmarkInfo("TrapezoidalBenchmark");
+        printf("numWorkers: %d.\n", self->numWorkers);
+        printf("numPieces: %d.\n", self->numPieces);
+        printf("leftEndPoint: %f.\n", self->leftEndPoint);
+        printf("rightEndPoint: %f.\n", self->rightEndPoint);
+        printSystemInfo();
+    =}
+
+    runner.start -> master.start;
+    worker0.outMaster -> master.inWorker0;
+    worker1.outMaster -> master.inWorker1;
+
+    master.outWorker0 -> worker0.inMaster;
+    master.outWorker1 -> worker1.inMaster;
+
+    master.finished -> runner.finish;
+}
