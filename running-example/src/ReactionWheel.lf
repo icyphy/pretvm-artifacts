@@ -55,6 +55,13 @@ target C {
   
       preamble {=
       =}
+
+      @wcet("200 usec")
+      reaction(desired_angle) {=
+        self->desired_angle.x = desired_angle.x;
+        self->desired_angle.y = desired_angle.y;
+        self->desired_angle.z = desired_angle.z;
+      =}
   
       @wcet("700 usec")
       reaction(current_speed, current_angle) -> control_signal {=
