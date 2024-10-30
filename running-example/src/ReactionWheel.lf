@@ -29,8 +29,6 @@ target C {
     #define WCET_REPORT(module)
     #endif
   
-    #define TAKE_TIME(N) do {volatile int __x; for (int i = 0; i<N;i++) {__x++;}} while(0)
-  
     typedef struct {
       float x;
       float y;
@@ -58,9 +56,9 @@ target C {
 
       @wcet("200 usec")
       reaction(desired_angle) {=
-        self->desired_angle.x = desired_angle.x;
-        self->desired_angle.y = desired_angle.y;
-        self->desired_angle.z = desired_angle.z;
+        self->desired_angle.x = desired_angle->value.x;
+        self->desired_angle.y = desired_angle->value.y;
+        self->desired_angle.z = desired_angle->value.z;
       =}
   
       @wcet("700 usec")
@@ -146,8 +144,13 @@ target C {
         #ifndef NDEBUG
         lf_print("Got motor control input %f %f %f", in->value.x, in->value.y, in->value.z);
         #endif
-  
-        TAKE_TIME(500);
+        
+        // TAKE_TIME(500);
+        volatile int __x;
+        #pragma loopbound min 0 max 500
+        for (int i = 0; i<500;i++) {
+          __x++;
+        }
   
         PRINT_LAG(Motor);
         WCET_END();
@@ -178,7 +181,14 @@ target C {
       reaction(t) -> out {=
           WCET_BEGIN();
           PRINT_LAG(Gyro);
-          TAKE_TIME(200);
+
+          // TAKE_TIME(200);
+          volatile int __x;
+          #pragma loopbound min 0 max 200
+          for (int i = 0; i<200;i++) {
+            __x++;
+          }
+
           out->value.x = self->value.x;
           out->value.y = self->value.y;
           out->value.z = self->value.z;
@@ -197,7 +207,14 @@ target C {
       reaction(t) -> out {=
           WCET_BEGIN();
           PRINT_LAG(ARS);
-          TAKE_TIME(200);
+
+          // TAKE_TIME(200);
+          volatile int __x;
+          #pragma loopbound min 0 max 200
+          for (int i = 0; i<200;i++) {
+            __x++;
+          }
+
           out->value.x = self->value.x;
           out->value.y = self->value.y;
           out->value.z = self->value.z;
