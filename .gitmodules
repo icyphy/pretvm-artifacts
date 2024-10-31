@@ -1,0 +1,6 @@
+[submodule "lingua-franca"]
+	path = lingua-franca
+	url = https://github.com/lf-lang/lingua-franca.git
+[submodule "flexpret"]
+	path = flexpret
+	url = https://github.com/pretis/flexpret.git
