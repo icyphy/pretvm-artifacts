@@ -49,7 +49,7 @@ preamble {=
 
 =}
 
-reactor Controller(period=100ms) {
+reactor Controller(Kp_float: float = 0.3, Ki_float: float = 0.1, Kd_float: float = 0.0) {
     input current_angle: IntVec3
     input current_speed: IntVec3
     input desired_angle: IntVec3
@@ -61,17 +61,17 @@ reactor Controller(period=100ms) {
     state last_error: IntVec3
     state error_accumulator: IntVec3
 
-    state Kp: int = 0
-    state Ki: int = 0
-    state Kd: int = 0
+    state Kp_fixed_point: int = 0
+    state Ki_fixed_point: int = 0
+    state Kd_fixed_point: int = 0
 
     reaction(startup) {=
-      self->Kp = -3.0 * FIXED_POINT_SCALE;
-      self->Ki = -0.1 * FIXED_POINT_SCALE;
-      self->Kd = 0 * FIXED_POINT_SCALE;
+      self->Kp_fixed_point = self->Kp_float * FIXED_POINT_SCALE;
+      self->Ki_fixed_point = self->Ki_float * FIXED_POINT_SCALE;
+      self->Kd_fixed_point = self->Kd_float * FIXED_POINT_SCALE;
 
       #ifndef NDEBUG
-      lf_print("Controller gains: Kp=%i Ki=%i Kd=%i", self->Kp, self->Ki, self->Kd);
+      lf_print("Controller gains: Kp=%i Ki=%i Kd=%i", self->Kp_fixed_point, self->Ki_fixed_point, self->Kd_fixed_point);
       #endif
     =}
 
@@ -108,17 +108,17 @@ reactor Controller(period=100ms) {
         #endif
 
         control_signal->value.x =
-              ((self->Kp * error.x) >> FIXED_POINT_FRACTION_BITS) 
-            + ((self->Ki * self->error_accumulator.x) >>  FIXED_POINT_FRACTION_BITS) // integral component
-            + ((self->Kd * (self->last_error.x - error.x)) >> FIXED_POINT_FRACTION_BITS); // differential component
+              ((self->Kp_fixed_point * error.x) >> FIXED_POINT_FRACTION_BITS) 
+            + ((self->Ki_fixed_point * self->error_accumulator.x) >>  FIXED_POINT_FRACTION_BITS) // integral component
+            + ((self->Kd_fixed_point * (self->last_error.x - error.x)) >> FIXED_POINT_FRACTION_BITS); // differential component
         control_signal->value.y = 
-              ((self->Kp * error.y)  >> FIXED_POINT_FRACTION_BITS)
-            + ((self->Ki * self->error_accumulator.y) >> FIXED_POINT_FRACTION_BITS) // integral component
-            + ((self->Kd * (self->last_error.y - error.y)) >> FIXED_POINT_FRACTION_BITS); // differential component
+              ((self->Kp_fixed_point * error.y)  >> FIXED_POINT_FRACTION_BITS)
+            + ((self->Ki_fixed_point * self->error_accumulator.y) >> FIXED_POINT_FRACTION_BITS) // integral component
+            + ((self->Kd_fixed_point * (self->last_error.y - error.y)) >> FIXED_POINT_FRACTION_BITS); // differential component
         control_signal->value.z = 
-              ((self->Kp * error.z) >> FIXED_POINT_FRACTION_BITS)
-            + ((self->Ki * self->error_accumulator.z) >> FIXED_POINT_FRACTION_BITS) // integral component
-            + ((self->Kd * (self->last_error.z - error.z)) >> FIXED_POINT_FRACTION_BITS);
+              ((self->Kp_fixed_point * error.z) >> FIXED_POINT_FRACTION_BITS)
+            + ((self->Ki_fixed_point * self->error_accumulator.z) >> FIXED_POINT_FRACTION_BITS) // integral component
+            + ((self->Kd_fixed_point * (self->last_error.z - error.z)) >> FIXED_POINT_FRACTION_BITS);
 
 
         self->last_error.x = error.x;
