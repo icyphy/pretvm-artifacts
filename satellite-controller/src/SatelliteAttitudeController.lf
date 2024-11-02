@@ -2,7 +2,7 @@ target C {
   scheduler: STATIC,
   build-type: Debug,
   platform: FlexPRET,
-  files : ["synthetic_data.c", "synthetic_data.h"],
+  files : ["synthetic_data.c", "synthetic_data.h", "satellite_attitude_controller.c", "satellite_attitude_controller.h"],
   cmake-include: "SatelliteAttitudeController.cmake",
   workers: 2,
 }
@@ -10,6 +10,7 @@ target C {
 preamble {=
   #include <string.h>
   #include <flexpret/flexpret.h>
+  #include "satellite_attitude_controller.h"
 
   // Conveneince macros for calculating the current lag
   #define LAG() (rdtime() - ((uint32_t)lf_time_logical()))
@@ -33,20 +34,6 @@ preamble {=
   #define EXEC_END()
   #define EXEC_REPORT(module)
   #endif
-
-  // Convenience macro to simulate some execution time.
-  #define TAKE_TIME(N) do {volatile int __x; for (int i = 0; i<N;i++) {__x++;}} while(0)    
-  
-  // Fixed point confuguration
-  #define FIXED_POINT_FRACTION_BITS 12
-  #define FIXED_POINT_SCALE (1 << FIXED_POINT_FRACTION_BITS)
-
-  typedef struct {
-    int x;
-    int y;
-    int z;
-  } IntVec3;
-
 =}
 
 reactor Controller(Kp_float: float = 0.3, Ki_float: float = 0.1, Kd_float: float = 0.0) {
@@ -66,10 +53,7 @@ reactor Controller(Kp_float: float = 0.3, Ki_float: float = 0.1, Kd_float: float
     state Kd_fixed_point: int = 0
 
     reaction(startup) {=
-      self->Kp_fixed_point = self->Kp_float * FIXED_POINT_SCALE;
-      self->Ki_fixed_point = self->Ki_float * FIXED_POINT_SCALE;
-      self->Kd_fixed_point = self->Kd_float * FIXED_POINT_SCALE;
-
+      controller_startup_reaction(self->Kp_float, self->Ki_float, self->Kd_float, &self->Kp_fixed_point, &self->Ki_fixed_point, &self->Kd_fixed_point);
       #ifndef NDEBUG
       lf_print("Controller gains: Kp=%i Ki=%i Kd=%i", self->Kp_fixed_point, self->Ki_fixed_point, self->Kd_fixed_point);
       #endif
@@ -77,10 +61,7 @@ reactor Controller(Kp_float: float = 0.3, Ki_float: float = 0.1, Kd_float: float
 
 
     reaction(desired_angle) {=
-      self->desired_angle.x = desired_angle->value.x;
-      self->desired_angle.y = desired_angle->value.y;
-      self->desired_angle.z = desired_angle->value.z;
-
+      controller_user_input_reaction(&desired_angle->value, &self->desired_angle);
       #ifndef NDEBUG
       lf_print("Desired angle set to %i %i %i", self->desired_angle.x, self->desired_angle.y, self->desired_angle.z);
       #endif
@@ -89,46 +70,7 @@ reactor Controller(Kp_float: float = 0.3, Ki_float: float = 0.1, Kd_float: float
     @wcet("700 usec")
     reaction(current_speed, current_angle) -> control_signal {=
         EXEC_BEGIN();
-        IntVec3 error;
-
-        #ifndef NDEBUG
-        lf_print("Speed: %i %i %i Angle:  %i %i %i", current_speed->value.x, current_speed->value.y, current_speed->value.z, current_angle->value.x, current_angle->value.y, current_angle->value.z);
-        #endif
-
-
-        error.x = (current_angle->value.x - self->desired_angle.x);
-        error.y = (current_angle->value.y - self->desired_angle.y);
-        error.z = (current_angle->value.z - self->desired_angle.z);
-        self->error_accumulator.x += error.x;
-        self->error_accumulator.y += error.y;
-        self->error_accumulator.z += error.z;
-
-        #ifndef NDEBUG
-        lf_print("Error = %i %i %i Accumulated: %i %i %i", error.x, error.y, error.z, self->error_accumulator.x, self->error_accumulator.y, self->error_accumulator.z);
-        #endif
-
-        control_signal->value.x =
-              ((self->Kp_fixed_point * error.x) >> FIXED_POINT_FRACTION_BITS) 
-            + ((self->Ki_fixed_point * self->error_accumulator.x) >>  FIXED_POINT_FRACTION_BITS) // integral component
-            + ((self->Kd_fixed_point * (self->last_error.x - error.x)) >> FIXED_POINT_FRACTION_BITS); // differential component
-        control_signal->value.y = 
-              ((self->Kp_fixed_point * error.y)  >> FIXED_POINT_FRACTION_BITS)
-            + ((self->Ki_fixed_point * self->error_accumulator.y) >> FIXED_POINT_FRACTION_BITS) // integral component
-            + ((self->Kd_fixed_point * (self->last_error.y - error.y)) >> FIXED_POINT_FRACTION_BITS); // differential component
-        control_signal->value.z = 
-              ((self->Kp_fixed_point * error.z) >> FIXED_POINT_FRACTION_BITS)
-            + ((self->Ki_fixed_point * self->error_accumulator.z) >> FIXED_POINT_FRACTION_BITS) // integral component
-            + ((self->Kd_fixed_point * (self->last_error.z - error.z)) >> FIXED_POINT_FRACTION_BITS);
-
-
-        self->last_error.x = error.x;
-        self->last_error.y = error.y;
-        self->last_error.z = error.z;
-        #ifndef NDEBUG
-        lf_print("Control = %i %i %i ", control_signal->value.x, control_signal->value.y, control_signal->value.z);
-        #endif
-
-
+        controller_run_reaction(&current_angle->value, &current_speed->value, &self->desired_angle, &self->last_error, &self->error_accumulator, self->Kp_fixed_point, self->Ki_fixed_point, self->Kd_fixed_point, &control_signal->value);
         lf_set_present(control_signal);
         EXEC_END();
         EXEC_REPORT(Controller);
@@ -145,7 +87,7 @@ reactor Motor(freq: float=1000.0, lfDeadline: time = 10 ms) {
       lf_print("Got motor control input %i %i %i", in->value.x, in->value.y, in->value.z);
       #endif
 
-      TAKE_TIME(500);
+      motor_reaction(&in->value);
 
       PRINT_LAG(Motor);
       EXEC_END();
@@ -160,9 +102,7 @@ reactor UserInput {
     output desired_angle: IntVec3;
     @wcet("25 usec")
     reaction(startup) -> desired_angle {=
-        desired_angle->value.x = 4096;
-        desired_angle->value.y = 2048;
-        desired_angle->value.z = 819;
+        user_input_startup(&desired_angle->value);
         lf_set_present(desired_angle);
     =}
 }
@@ -179,14 +119,7 @@ reactor Gyroscope(period: time =10ms) {
     reaction(t) -> out {=
         EXEC_BEGIN();
         PRINT_LAG(Gyro);      
-        TAKE_TIME(200);
-        out->value.x = synthetic_gyro[self->cnt][0];
-        out->value.y = synthetic_gyro[self->cnt][1];
-        out->value.x = synthetic_gyro[self->cnt][2];
-        self->cnt++;
-        if (self->cnt >= NUM_GYRO_SAMPLES) {
-          self->cnt = 0;
-        }
+        gyro_reaction(&out->value);
         lf_set_present(out);
         EXEC_END();
         EXEC_REPORT(Gyro);
@@ -201,10 +134,7 @@ reactor Accelerometer(period: time =10ms) {
     reaction(t) -> out {=
         EXEC_BEGIN();
         PRINT_LAG(ARS);
-        TAKE_TIME(200);
-        out->value.x = 100;
-        out->value.y = 200;
-        out->value.z = 300;
+        acc_reaction(&out->value);
         lf_set_present(out);
         EXEC_END();
         EXEC_REPORT(ARS);
