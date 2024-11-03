@@ -71,7 +71,8 @@ You can either build the docker image yourself or pull it from dockerhub.
 
 **Using the Docker Image**
 ```bash
-    $ sudo docker run -ti -v ${PWD}/docker/:/root/rtas24/ -v ${PWD}/satellite-controller:/root/rtas24/satellite-controller pretvm/rtas:v1
+    $ sudo docker run -ti -v ${PWD}/docker/:/root/rtas24/ -v ${PWD}/satellite-controller:/root/rtas24/satellite-controller einspaten/rtas24:v1
+    $ source /source.sh
     $ ./analyse-all.sh
 ```
 
