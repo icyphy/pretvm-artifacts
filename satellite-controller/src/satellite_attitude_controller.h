@@ -12,16 +12,32 @@ typedef struct {
 #define FIXED_POINT_SCALE (1 << FIXED_POINT_FRACTION_BITS)
 
 void gyro_reaction(IntVec3 *sample_ret);
-void acc_reaction(IntVec3 *sample_ret);
-void controller_run_reaction(IntVec3 *gyro_sample, IntVec3 *acc_sample,
-                             IntVec3 *desired_angle, IntVec3 *last_error,
-                             IntVec3 *error_accumulated, int Kp, int Ki, int Kd,
-                             IntVec3 *motor_ret);
-void controller_startup_reaction(float Kp, float Ki, float Kd, int *Kp_fixed,
-                                 int *Ki_fixed, int *Kd_fixed);
+void ars_reaction(IntVec3 *sample_ret);
 
-void controller_user_input_reaction(IntVec3 *user_input,
-                                    IntVec3 *desired_angle);
+typedef struct {
+  IntVec3 last_gyro;
+  int delta_t;
+} SensorFusionState;
+
+void sensor_fusion_reaction(SensorFusionState *state, IntVec3 *gyro,
+                            IntVec3 *ars, IntVec3 *fusion_ret);
+
+typedef struct {
+  IntVec3 last_error;
+  IntVec3 error_accumulated;
+  IntVec3 desired_angle;
+  int Kp;
+  int Ki;
+  int Kd;
+} ControllerState;
+
+void controller_run_reaction(ControllerState *state, IntVec3 *gyro_sample,
+                             IntVec3 *ars_sample, IntVec3 *motor_ret);
+void controller_startup_reaction(ControllerState *state, float Kp, float Ki,
+                                 float Kd);
+
+void controller_user_input_reaction(ControllerState *state,
+                                    IntVec3 *user_input);
 
 void motor_reaction(IntVec3 *control_signal);
 
