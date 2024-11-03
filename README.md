@@ -57,8 +57,20 @@ TODO: Add this step.
 
 ### WCET
 
+You can either build the docker image yourself or pull it from dockerhub.
+
+**Building it Yourself**
 ```bash
-    $ sudo docker build ./docker -t pretvm/rtas:v1
+    $ sudo docker build ./docker -t einspaten/rtas24:v1
+```
+
+**Pulling it from Dockerhub**
+```bash
+    $ sudo docker pull einspaten/rtas24:v1
+```
+
+**Using the Docker Image**
+```bash
     $ sudo docker run -ti -v ${PWD}/docker/:/root/rtas24/ -v ${PWD}/satellite-controller:/root/rtas24/satellite-controller pretvm/rtas:v1
     $ ./analyse-all.sh
 ```
