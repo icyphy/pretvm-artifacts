@@ -38,15 +38,15 @@ void sensor_fusion_startup_reaction(SensorFusionState *state) {
 }
 
 void sensor_fusion_reaction(SensorFusionState *state, IntVec3 *gyro,
-                            IntVec3 *ars, IntVec3 *fusion_ret, int delta_t) {
+                            IntVec3 *ars, IntVec3 *fusion_ret) {
   // Expected current_angle based on ARS data.
   IntVec3 ars_current_angle;
-  ars_current_angle.x =
-      state->last_gyro.x + (ars->x * delta_t) >> FIXED_POINT_FRACTION_BITS;
-  ars_current_angle.y =
-      state->last_gyro.y + (ars->y * delta_t) >> FIXED_POINT_FRACTION_BITS;
-  ars_current_angle.z =
-      state->last_gyro.z + (ars->z * delta_t) >> FIXED_POINT_FRACTION_BITS;
+  ars_current_angle.x = state->last_gyro.x + ((ars->x * state->delta_t) >>
+                                              FIXED_POINT_FRACTION_BITS);
+  ars_current_angle.y = state->last_gyro.y + ((ars->y * state->delta_t) >>
+                                              FIXED_POINT_FRACTION_BITS);
+  ars_current_angle.z = state->last_gyro.z + ((ars->z * state->delta_t) >>
+                                              FIXED_POINT_FRACTION_BITS);
 
   // Do a weighted sum of the gyro and ARS data.
   fusion_ret->x = (gyro->x + ars_current_angle.x) >> 1;
@@ -99,7 +99,10 @@ void controller_user_input_reaction(ControllerState *state,
   state->desired_angle.z = user_input->z;
 }
 
-void motor_reaction(IntVec3 *control_signal) { TAKE_TIME(400); }
+void motor_reaction(IntVec3 *control_signal) {
+  (void)control_signal;
+  TAKE_TIME(400);
+}
 
 void user_input_startup(IntVec3 *desired_angle) {
   desired_angle->x = 4096;

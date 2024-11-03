@@ -22,6 +22,8 @@ typedef struct {
 void sensor_fusion_reaction(SensorFusionState *state, IntVec3 *gyro,
                             IntVec3 *ars, IntVec3 *fusion_ret);
 
+void sensor_fusion_startup_reaction(SensorFusionState *state);
+
 typedef struct {
   IntVec3 last_error;
   IntVec3 error_accumulated;
@@ -31,8 +33,8 @@ typedef struct {
   int Kd;
 } ControllerState;
 
-void controller_run_reaction(ControllerState *state, IntVec3 *gyro_sample,
-                             IntVec3 *ars_sample, IntVec3 *motor_ret);
+void controller_run_reaction(ControllerState *state, IntVec3 *current_angle,
+                             IntVec3 *motor_ret);
 void controller_startup_reaction(ControllerState *state, float Kp, float Ki,
                                  float Kd);
 

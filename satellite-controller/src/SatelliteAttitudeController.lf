@@ -1,8 +1,8 @@
 target C {
-  scheduler: {
-    type: STATIC,
-    mapper: EGS
-  },
+  // scheduler: {
+  //   type: STATIC,
+  //   mapper: EGS
+  // },
   build-type: Debug,
   platform: FlexPRET,
   files : ["synthetic_data.c", "synthetic_data.h", "satellite_attitude_controller.c", "satellite_attitude_controller.h"],
@@ -50,7 +50,7 @@ reactor Controller(Kp_float: float = 0.3, Ki_float: float = 0.1, Kd_float: float
     reaction(startup) {=
       controller_startup_reaction(&self->_state, self->Kp_float, self->Ki_float, self->Kd_float);
       #ifndef NDEBUG
-      lf_print("Controller gains: Kp=%i Ki=%i Kd=%i", self->_state.Kp_fixed_point, self->_state.Ki_fixed_point, self->_state.Kd_fixed_point);
+      lf_print("Controller gains: Kp=%i Ki=%i Kd=%i", self->_state.Kp, self->_state.Ki, self->_state.Kd);
       #endif
     =}
 
@@ -65,7 +65,7 @@ reactor Controller(Kp_float: float = 0.3, Ki_float: float = 0.1, Kd_float: float
     @wcet("700 usec")
     reaction(current_angle) -> control_signal {=
         EXEC_BEGIN();
-        controller_run_reaction(&self->_state, &current_angle->value, &current_angular_rate->value, &control_signal->value);
+        controller_run_reaction(&self->_state, &current_angle->value, &control_signal->value);
         lf_set_present(control_signal);
         EXEC_END();
         EXEC_REPORT(Controller);
@@ -130,7 +130,7 @@ reactor SensorFusion {
     state delta_t: int
     @wcet("0 usec")
     reaction(startup) {=
-        sensor_fusion_startup(&self->_state);
+        sensor_fusion_startup_reaction(&self->_state);
     =}
 
     @wcet("10 usec")
@@ -152,7 +152,7 @@ reactor AngularRateSensor(period: time =10ms) {
     reaction(t) -> out {=
         EXEC_BEGIN();
         PRINT_LAG(ARS);
-        acc_reaction(&out->value);
+        ars_reaction(&out->value);
         lf_set_present(out);
         EXEC_END();
         EXEC_REPORT(ARS);
