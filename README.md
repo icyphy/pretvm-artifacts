@@ -55,6 +55,12 @@ make
 TODO: Add this step.
 
 
+### WCET
 
+```bash
+    $ sudo docker build ./docker -t pretvm/rtas:v1
+    $ sudo docker run -ti -v ${PWD}/docker/:/root/rtas24/ -v ${PWD}/satellite-controller:/root/rtas24/satellite-controller pretvm/rtas:v1
+    $ ./analyse-all.sh
+```
 
 
