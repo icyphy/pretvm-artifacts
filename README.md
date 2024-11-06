@@ -75,4 +75,4 @@ You can either build the docker image yourself or pull it from dockerhub.
     $ ./analyse-all.sh
 ```
 
-
+TODO: we should also add the source links here and how to run the script to compile and do WCET analysis
