@@ -1,0 +1,552 @@
+sed: -e expression #1, char 5: unexpected `,'
+/root/platin/lib/core/options.rb:233:in `optparse': ambiguous option: -an (OptionParser::AmbiguousOption)
+	from /root/platin/lib/tools/wcet.rb:552:in `<main>'
+/root/platin/lib/core/options.rb:233:in `optparse': invalid option: a (OptionParser::InvalidOption)
+	from /root/platin/lib/tools/wcet.rb:552:in `<main>'
+make: *** [Makefile:8: analysis] Error 1
+[platin] WARNING: Commercial a3 tools is not available; use --disable-ait to hide this warning
+[platin] INFO: Finished Parsing PML Files                   in 15 ms
+[platin] WARNING: No instruction found at (gyro_reaction)0+47 instructions (addi)
+[platin] WARNING: No instruction found at (gyro_reaction)0+47 instructions (ret)
+[platin] WARNING: No instruction found at (ars_reaction)1+47 instructions (addi)
+[platin] WARNING: No instruction found at (ars_reaction)1+47 instructions (ret)
+[platin] WARNING: No instruction found at (sensor_fusion_reaction)3+58 instructions (lw)
+[platin] WARNING: No instruction found at (sensor_fusion_reaction)3+58 instructions (addi)
+[platin] WARNING: No instruction found at (sensor_fusion_reaction)3+58 instructions (ret)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (addi)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (ret)
+[platin] WARNING: No instruction found at (controller_startup_reaction)5+32 instructions (lw)
+[platin] WARNING: No instruction found at (controller_startup_reaction)5+32 instructions (lw)
+[platin] WARNING: No instruction found at (controller_startup_reaction)5+32 instructions (lw)
+[platin] WARNING: No instruction found at (controller_startup_reaction)5+32 instructions (lw)
+[platin] WARNING: No instruction found at (controller_startup_reaction)5+32 instructions (addi)
+[platin] WARNING: No instruction found at (controller_startup_reaction)5+32 instructions (ret)
+[platin] INFO: Finished Read Symbols                        in 22 ms
+[platin] INFO: Finished Flow Fact Transformation ["llvm.bc"] in 3 ms
+[platin] INFO: Finished Flow Fact Transformation ["user.bc"] in 0 ms
+[platin] INFO: Finished Flow Fact Transformation ["model.bc"] in 0 ms
+[platin] FATAL: At /root/platin/lib/core/utils.rb:228:in `die'
+[platin] FATAL: Unknown opcode: PseudoCALL
+/root/platin/lib/core/utils.rb:232:in `die': I desire to die (Exception)
+	from /root/platin/lib/arch/flexpret.rb:250:in `cycle_cost'
+	from /root/platin/lib/arch/flexpret.rb:164:in `block in path_wcet'
+	from /root/platin/lib/core/pmlbase.rb:174:in `each'
+	from /root/platin/lib/core/pmlbase.rb:174:in `each'
+	from /root/platin/lib/arch/flexpret.rb:163:in `reduce'
+	from /root/platin/lib/arch/flexpret.rb:163:in `path_wcet'
+	from /root/platin/lib/analysis/wca.rb:70:in `edge_cost'
+	from /root/platin/lib/analysis/wca.rb:201:in `block in analyze'
+	from /root/platin/lib/analysis/ipet.rb:927:in `block in add_function_with_blocks'
+	from /root/platin/lib/analysis/ipet.rb:408:in `block (2 levels) in each_edge'
+	from /root/platin/lib/analysis/ipet.rb:407:in `each'
+	from /root/platin/lib/analysis/ipet.rb:407:in `block in each_edge'
+	from /root/platin/lib/core/pmlbase.rb:178:in `each'
+	from /root/platin/lib/core/pmlbase.rb:178:in `each_with_index'
+	from /root/platin/lib/core/pmlbase.rb:178:in `each_with_index'
+	from /root/platin/lib/analysis/ipet.rb:405:in `each_edge'
+	from /root/platin/lib/analysis/ipet.rb:924:in `add_function_with_blocks'
+	from /root/platin/lib/analysis/ipet.rb:1066:in `block in build_sstg'
+	from /usr/lib/ruby/2.7.0/set.rb:328:in `each_key'
+	from /usr/lib/ruby/2.7.0/set.rb:328:in `each'
+	from /root/platin/lib/analysis/ipet.rb:1065:in `build_sstg'
+	from /root/platin/lib/analysis/wca.rb:200:in `analyze'
+	from /root/platin/lib/tools/wca.rb:87:in `run'
+	from /root/platin/lib/tools/wcet.rb:212:in `block in wcet_analysis_platin'
+	from /root/platin/lib/core/utils.rb:21:in `time'
+	from /root/platin/lib/tools/wcet.rb:200:in `wcet_analysis_platin'
+	from /root/platin/lib/tools/wcet.rb:191:in `wcet_analysis'
+	from /root/platin/lib/tools/wcet.rb:97:in `run_analysis'
+	from /root/platin/lib/tools/wcet.rb:436:in `run_in_outdir'
+	from /root/platin/lib/tools/wcet.rb:505:in `run'
+	from /root/platin/lib/tools/wcet.rb:574:in `<main>'
+make: *** [Makefile:8: analysis] Error 1
+[platin] WARNING: Commercial a3 tools is not available; use --disable-ait to hide this warning
+[platin] INFO: Finished Parsing PML Files                   in 10 ms
+[platin] WARNING: No instruction found at (gyro_reaction)0+47 instructions (addi)
+[platin] WARNING: No instruction found at (gyro_reaction)0+47 instructions (ret)
+[platin] WARNING: No instruction found at (ars_reaction)1+47 instructions (addi)
+[platin] WARNING: No instruction found at (ars_reaction)1+47 instructions (ret)
+[platin] WARNING: No instruction found at (sensor_fusion_reaction)3+58 instructions (lw)
+[platin] WARNING: No instruction found at (sensor_fusion_reaction)3+58 instructions (addi)
+[platin] WARNING: No instruction found at (sensor_fusion_reaction)3+58 instructions (ret)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (addi)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (ret)
+[platin] WARNING: No instruction found at (controller_startup_reaction)5+32 instructions (lw)
+[platin] WARNING: No instruction found at (controller_startup_reaction)5+32 instructions (lw)
+[platin] WARNING: No instruction found at (controller_startup_reaction)5+32 instructions (lw)
+[platin] WARNING: No instruction found at (controller_startup_reaction)5+32 instructions (lw)
+[platin] WARNING: No instruction found at (controller_startup_reaction)5+32 instructions (addi)
+[platin] WARNING: No instruction found at (controller_startup_reaction)5+32 instructions (ret)
+[platin] INFO: Finished Read Symbols                        in 14 ms
+[platin] INFO: Finished Flow Fact Transformation ["llvm.bc"] in 3 ms
+[platin] INFO: Finished Flow Fact Transformation ["user.bc"] in 0 ms
+[platin] INFO: Finished Flow Fact Transformation ["model.bc"] in 0 ms
+[platin] FATAL: At /root/platin/lib/core/utils.rb:228:in `die'
+[platin] FATAL: Unknown opcode: PseudoCALL
+/root/platin/lib/core/utils.rb:232:in `die': I desire to die (Exception)
+	from /root/platin/lib/arch/flexpret.rb:250:in `cycle_cost'
+	from /root/platin/lib/arch/flexpret.rb:164:in `block in path_wcet'
+	from /root/platin/lib/core/pmlbase.rb:174:in `each'
+	from /root/platin/lib/core/pmlbase.rb:174:in `each'
+	from /root/platin/lib/arch/flexpret.rb:163:in `reduce'
+	from /root/platin/lib/arch/flexpret.rb:163:in `path_wcet'
+	from /root/platin/lib/analysis/wca.rb:70:in `edge_cost'
+	from /root/platin/lib/analysis/wca.rb:201:in `block in analyze'
+	from /root/platin/lib/analysis/ipet.rb:927:in `block in add_function_with_blocks'
+	from /root/platin/lib/analysis/ipet.rb:408:in `block (2 levels) in each_edge'
+	from /root/platin/lib/analysis/ipet.rb:407:in `each'
+	from /root/platin/lib/analysis/ipet.rb:407:in `block in each_edge'
+	from /root/platin/lib/core/pmlbase.rb:178:in `each'
+	from /root/platin/lib/core/pmlbase.rb:178:in `each_with_index'
+	from /root/platin/lib/core/pmlbase.rb:178:in `each_with_index'
+	from /root/platin/lib/analysis/ipet.rb:405:in `each_edge'
+	from /root/platin/lib/analysis/ipet.rb:924:in `add_function_with_blocks'
+	from /root/platin/lib/analysis/ipet.rb:1066:in `block in build_sstg'
+	from /usr/lib/ruby/2.7.0/set.rb:328:in `each_key'
+	from /usr/lib/ruby/2.7.0/set.rb:328:in `each'
+	from /root/platin/lib/analysis/ipet.rb:1065:in `build_sstg'
+	from /root/platin/lib/analysis/wca.rb:200:in `analyze'
+	from /root/platin/lib/tools/wca.rb:87:in `run'
+	from /root/platin/lib/tools/wcet.rb:212:in `block in wcet_analysis_platin'
+	from /root/platin/lib/core/utils.rb:21:in `time'
+	from /root/platin/lib/tools/wcet.rb:200:in `wcet_analysis_platin'
+	from /root/platin/lib/tools/wcet.rb:191:in `wcet_analysis'
+	from /root/platin/lib/tools/wcet.rb:97:in `run_analysis'
+	from /root/platin/lib/tools/wcet.rb:436:in `run_in_outdir'
+	from /root/platin/lib/tools/wcet.rb:505:in `run'
+	from /root/platin/lib/tools/wcet.rb:574:in `<main>'
+make: *** [Makefile:8: analysis] Error 1
+[platin] WARNING: Commercial a3 tools is not available; use --disable-ait to hide this warning
+[platin] INFO: Finished Parsing PML Files                   in 9 ms
+[platin] WARNING: No instruction found at (gyro_reaction)0+47 instructions (addi)
+[platin] WARNING: No instruction found at (gyro_reaction)0+47 instructions (ret)
+[platin] WARNING: No instruction found at (ars_reaction)1+47 instructions (addi)
+[platin] WARNING: No instruction found at (ars_reaction)1+47 instructions (ret)
+[platin] WARNING: No instruction found at (sensor_fusion_reaction)3+58 instructions (lw)
+[platin] WARNING: No instruction found at (sensor_fusion_reaction)3+58 instructions (addi)
+[platin] WARNING: No instruction found at (sensor_fusion_reaction)3+58 instructions (ret)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (addi)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (ret)
+[platin] WARNING: No instruction found at (controller_startup_reaction)5+32 instructions (lw)
+[platin] WARNING: No instruction found at (controller_startup_reaction)5+32 instructions (lw)
+[platin] WARNING: No instruction found at (controller_startup_reaction)5+32 instructions (lw)
+[platin] WARNING: No instruction found at (controller_startup_reaction)5+32 instructions (lw)
+[platin] WARNING: No instruction found at (controller_startup_reaction)5+32 instructions (addi)
+[platin] WARNING: No instruction found at (controller_startup_reaction)5+32 instructions (ret)
+[platin] INFO: Finished Read Symbols                        in 9 ms
+[platin] INFO: Finished Flow Fact Transformation ["llvm.bc"] in 0 ms
+[platin] INFO: Finished Flow Fact Transformation ["user.bc"] in 0 ms
+[platin] INFO: Finished Flow Fact Transformation ["model.bc"] in 0 ms
+[platin] FATAL: At /root/platin/lib/core/utils.rb:228:in `die'
+[platin] FATAL: Unknown opcode: PseudoRET
+/root/platin/lib/core/utils.rb:232:in `die': I desire to die (Exception)
+	from /root/platin/lib/arch/flexpret.rb:250:in `cycle_cost'
+	from /root/platin/lib/arch/flexpret.rb:164:in `block in path_wcet'
+	from /root/platin/lib/arch/flexpret.rb:163:in `each'
+	from /root/platin/lib/arch/flexpret.rb:163:in `reduce'
+	from /root/platin/lib/arch/flexpret.rb:163:in `path_wcet'
+	from /root/platin/lib/analysis/wca.rb:70:in `edge_cost'
+	from /root/platin/lib/analysis/wca.rb:201:in `block in analyze'
+	from /root/platin/lib/analysis/ipet.rb:927:in `block in add_function_with_blocks'
+	from /root/platin/lib/analysis/ipet.rb:410:in `block in each_edge'
+	from /root/platin/lib/core/pmlbase.rb:178:in `each'
+	from /root/platin/lib/core/pmlbase.rb:178:in `each_with_index'
+	from /root/platin/lib/core/pmlbase.rb:178:in `each_with_index'
+	from /root/platin/lib/analysis/ipet.rb:405:in `each_edge'
+	from /root/platin/lib/analysis/ipet.rb:924:in `add_function_with_blocks'
+	from /root/platin/lib/analysis/ipet.rb:1066:in `block in build_sstg'
+	from /usr/lib/ruby/2.7.0/set.rb:328:in `each_key'
+	from /usr/lib/ruby/2.7.0/set.rb:328:in `each'
+	from /root/platin/lib/analysis/ipet.rb:1065:in `build_sstg'
+	from /root/platin/lib/analysis/wca.rb:200:in `analyze'
+	from /root/platin/lib/tools/wca.rb:87:in `run'
+	from /root/platin/lib/tools/wcet.rb:212:in `block in wcet_analysis_platin'
+	from /root/platin/lib/core/utils.rb:21:in `time'
+	from /root/platin/lib/tools/wcet.rb:200:in `wcet_analysis_platin'
+	from /root/platin/lib/tools/wcet.rb:191:in `wcet_analysis'
+	from /root/platin/lib/tools/wcet.rb:97:in `run_analysis'
+	from /root/platin/lib/tools/wcet.rb:436:in `run_in_outdir'
+	from /root/platin/lib/tools/wcet.rb:505:in `run'
+	from /root/platin/lib/tools/wcet.rb:574:in `<main>'
+make: *** [Makefile:8: analysis] Error 1
+[platin] WARNING: Commercial a3 tools is not available; use --disable-ait to hide this warning
+[platin] INFO: Finished Parsing PML Files                   in 10 ms
+[platin] WARNING: No instruction found at (gyro_reaction)0+47 instructions (addi)
+[platin] WARNING: No instruction found at (gyro_reaction)0+47 instructions (ret)
+[platin] WARNING: No instruction found at (ars_reaction)1+47 instructions (addi)
+[platin] WARNING: No instruction found at (ars_reaction)1+47 instructions (ret)
+[platin] WARNING: No instruction found at (sensor_fusion_reaction)3+58 instructions (lw)
+[platin] WARNING: No instruction found at (sensor_fusion_reaction)3+58 instructions (addi)
+[platin] WARNING: No instruction found at (sensor_fusion_reaction)3+58 instructions (ret)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (addi)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (ret)
+[platin] WARNING: No instruction found at (controller_startup_reaction)5+32 instructions (lw)
+[platin] WARNING: No instruction found at (controller_startup_reaction)5+32 instructions (lw)
+[platin] WARNING: No instruction found at (controller_startup_reaction)5+32 instructions (lw)
+[platin] WARNING: No instruction found at (controller_startup_reaction)5+32 instructions (lw)
+[platin] WARNING: No instruction found at (controller_startup_reaction)5+32 instructions (addi)
+[platin] WARNING: No instruction found at (controller_startup_reaction)5+32 instructions (ret)
+[platin] INFO: Finished Read Symbols                        in 11 ms
+[platin] INFO: Finished Flow Fact Transformation ["llvm.bc"] in 0 ms
+[platin] INFO: Finished Flow Fact Transformation ["user.bc"] in 0 ms
+[platin] INFO: Finished Flow Fact Transformation ["model.bc"] in 0 ms
+[platin] FATAL: At /root/platin/lib/core/utils.rb:228:in `die'
+[platin] FATAL: Unknown opcode: PseudoCALL
+/root/platin/lib/core/utils.rb:232:in `die': I desire to die (Exception)
+	from /root/platin/lib/arch/flexpret.rb:250:in `cycle_cost'
+	from /root/platin/lib/arch/flexpret.rb:164:in `block in path_wcet'
+	from /root/platin/lib/arch/flexpret.rb:163:in `each'
+	from /root/platin/lib/arch/flexpret.rb:163:in `reduce'
+	from /root/platin/lib/arch/flexpret.rb:163:in `path_wcet'
+	from /root/platin/lib/analysis/wca.rb:70:in `edge_cost'
+	from /root/platin/lib/analysis/wca.rb:201:in `block in analyze'
+	from /root/platin/lib/analysis/ipet.rb:927:in `block in add_function_with_blocks'
+	from /root/platin/lib/analysis/ipet.rb:410:in `block in each_edge'
+	from /root/platin/lib/core/pmlbase.rb:178:in `each'
+	from /root/platin/lib/core/pmlbase.rb:178:in `each_with_index'
+	from /root/platin/lib/core/pmlbase.rb:178:in `each_with_index'
+	from /root/platin/lib/analysis/ipet.rb:405:in `each_edge'
+	from /root/platin/lib/analysis/ipet.rb:924:in `add_function_with_blocks'
+	from /root/platin/lib/analysis/ipet.rb:1066:in `block in build_sstg'
+	from /usr/lib/ruby/2.7.0/set.rb:328:in `each_key'
+	from /usr/lib/ruby/2.7.0/set.rb:328:in `each'
+	from /root/platin/lib/analysis/ipet.rb:1065:in `build_sstg'
+	from /root/platin/lib/analysis/wca.rb:200:in `analyze'
+	from /root/platin/lib/tools/wca.rb:87:in `run'
+	from /root/platin/lib/tools/wcet.rb:212:in `block in wcet_analysis_platin'
+	from /root/platin/lib/core/utils.rb:21:in `time'
+	from /root/platin/lib/tools/wcet.rb:200:in `wcet_analysis_platin'
+	from /root/platin/lib/tools/wcet.rb:191:in `wcet_analysis'
+	from /root/platin/lib/tools/wcet.rb:97:in `run_analysis'
+	from /root/platin/lib/tools/wcet.rb:436:in `run_in_outdir'
+	from /root/platin/lib/tools/wcet.rb:505:in `run'
+	from /root/platin/lib/tools/wcet.rb:574:in `<main>'
+make: *** [Makefile:8: analysis] Error 1
+[platin] WARNING: Commercial a3 tools is not available; use --disable-ait to hide this warning
+[platin] INFO: Finished Parsing PML Files                   in 3 ms
+[platin] WARNING: No instruction found at (gyro_reaction)0+47 instructions (addi)
+[platin] WARNING: No instruction found at (gyro_reaction)0+47 instructions (ret)
+[platin] WARNING: No instruction found at (ars_reaction)1+47 instructions (addi)
+[platin] WARNING: No instruction found at (ars_reaction)1+47 instructions (ret)
+[platin] WARNING: No instruction found at (sensor_fusion_reaction)3+58 instructions (lw)
+[platin] WARNING: No instruction found at (sensor_fusion_reaction)3+58 instructions (addi)
+[platin] WARNING: No instruction found at (sensor_fusion_reaction)3+58 instructions (ret)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (addi)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (ret)
+[platin] WARNING: No instruction found at (controller_startup_reaction)5+32 instructions (lw)
+[platin] WARNING: No instruction found at (controller_startup_reaction)5+32 instructions (lw)
+[platin] WARNING: No instruction found at (controller_startup_reaction)5+32 instructions (lw)
+[platin] WARNING: No instruction found at (controller_startup_reaction)5+32 instructions (lw)
+[platin] WARNING: No instruction found at (controller_startup_reaction)5+32 instructions (addi)
+[platin] WARNING: No instruction found at (controller_startup_reaction)5+32 instructions (ret)
+[platin] INFO: Finished Read Symbols                        in 11 ms
+[platin] INFO: Finished Flow Fact Transformation ["llvm.bc"] in 0 ms
+[platin] INFO: Finished Flow Fact Transformation ["user.bc"] in 0 ms
+[platin] INFO: Finished Flow Fact Transformation ["model.bc"] in 0 ms
+[platin] FATAL: At /root/platin/lib/core/utils.rb:228:in `die'
+[platin] FATAL: Unknown opcode: PseudoCALL
+/root/platin/lib/core/utils.rb:232:in `die': I desire to die (Exception)
+	from /root/platin/lib/arch/flexpret.rb:250:in `cycle_cost'
+	from /root/platin/lib/arch/flexpret.rb:164:in `block in path_wcet'
+	from /root/platin/lib/arch/flexpret.rb:163:in `each'
+	from /root/platin/lib/arch/flexpret.rb:163:in `reduce'
+	from /root/platin/lib/arch/flexpret.rb:163:in `path_wcet'
+	from /root/platin/lib/analysis/wca.rb:70:in `edge_cost'
+	from /root/platin/lib/analysis/wca.rb:201:in `block in analyze'
+	from /root/platin/lib/analysis/ipet.rb:927:in `block in add_function_with_blocks'
+	from /root/platin/lib/analysis/ipet.rb:410:in `block in each_edge'
+	from /root/platin/lib/core/pmlbase.rb:178:in `each'
+	from /root/platin/lib/core/pmlbase.rb:178:in `each_with_index'
+	from /root/platin/lib/core/pmlbase.rb:178:in `each_with_index'
+	from /root/platin/lib/analysis/ipet.rb:405:in `each_edge'
+	from /root/platin/lib/analysis/ipet.rb:924:in `add_function_with_blocks'
+	from /root/platin/lib/analysis/ipet.rb:1066:in `block in build_sstg'
+	from /usr/lib/ruby/2.7.0/set.rb:328:in `each_key'
+	from /usr/lib/ruby/2.7.0/set.rb:328:in `each'
+	from /root/platin/lib/analysis/ipet.rb:1065:in `build_sstg'
+	from /root/platin/lib/analysis/wca.rb:200:in `analyze'
+	from /root/platin/lib/tools/wca.rb:87:in `run'
+	from /root/platin/lib/tools/wcet.rb:212:in `block in wcet_analysis_platin'
+	from /root/platin/lib/core/utils.rb:21:in `time'
+	from /root/platin/lib/tools/wcet.rb:200:in `wcet_analysis_platin'
+	from /root/platin/lib/tools/wcet.rb:191:in `wcet_analysis'
+	from /root/platin/lib/tools/wcet.rb:97:in `run_analysis'
+	from /root/platin/lib/tools/wcet.rb:436:in `run_in_outdir'
+	from /root/platin/lib/tools/wcet.rb:505:in `run'
+	from /root/platin/lib/tools/wcet.rb:574:in `<main>'
+make: *** [Makefile:8: analysis] Error 1
+[platin] WARNING: Commercial a3 tools is not available; use --disable-ait to hide this warning
+[platin] INFO: Finished Parsing PML Files                   in 3 ms
+[platin] WARNING: No instruction found at (gyro_reaction)0+47 instructions (addi)
+[platin] WARNING: No instruction found at (gyro_reaction)0+47 instructions (ret)
+[platin] WARNING: No instruction found at (ars_reaction)1+47 instructions (addi)
+[platin] WARNING: No instruction found at (ars_reaction)1+47 instructions (ret)
+[platin] WARNING: No instruction found at (sensor_fusion_reaction)3+58 instructions (lw)
+[platin] WARNING: No instruction found at (sensor_fusion_reaction)3+58 instructions (addi)
+[platin] WARNING: No instruction found at (sensor_fusion_reaction)3+58 instructions (ret)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (addi)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (ret)
+[platin] WARNING: No instruction found at (controller_startup_reaction)5+32 instructions (lw)
+[platin] WARNING: No instruction found at (controller_startup_reaction)5+32 instructions (lw)
+[platin] WARNING: No instruction found at (controller_startup_reaction)5+32 instructions (lw)
+[platin] WARNING: No instruction found at (controller_startup_reaction)5+32 instructions (lw)
+[platin] WARNING: No instruction found at (controller_startup_reaction)5+32 instructions (addi)
+[platin] WARNING: No instruction found at (controller_startup_reaction)5+32 instructions (ret)
+[platin] INFO: Finished Read Symbols                        in 10 ms
+[platin] INFO: Finished Flow Fact Transformation ["llvm.bc"] in 0 ms
+[platin] INFO: Finished Flow Fact Transformation ["user.bc"] in 0 ms
+[platin] INFO: Finished Flow Fact Transformation ["model.bc"] in 0 ms
+[platin] FATAL: At /root/platin/lib/core/utils.rb:228:in `die'
+[platin] FATAL: Unknown opcode: PseudoCALL
+/root/platin/lib/core/utils.rb:232:in `die': I desire to die (Exception)
+	from /root/platin/lib/arch/flexpret.rb:250:in `cycle_cost'
+	from /root/platin/lib/arch/flexpret.rb:164:in `block in path_wcet'
+	from /root/platin/lib/arch/flexpret.rb:163:in `each'
+	from /root/platin/lib/arch/flexpret.rb:163:in `reduce'
+	from /root/platin/lib/arch/flexpret.rb:163:in `path_wcet'
+	from /root/platin/lib/analysis/wca.rb:70:in `edge_cost'
+	from /root/platin/lib/analysis/wca.rb:201:in `block in analyze'
+	from /root/platin/lib/analysis/ipet.rb:927:in `block in add_function_with_blocks'
+	from /root/platin/lib/analysis/ipet.rb:410:in `block in each_edge'
+	from /root/platin/lib/core/pmlbase.rb:178:in `each'
+	from /root/platin/lib/core/pmlbase.rb:178:in `each_with_index'
+	from /root/platin/lib/core/pmlbase.rb:178:in `each_with_index'
+	from /root/platin/lib/analysis/ipet.rb:405:in `each_edge'
+	from /root/platin/lib/analysis/ipet.rb:924:in `add_function_with_blocks'
+	from /root/platin/lib/analysis/ipet.rb:1066:in `block in build_sstg'
+	from /usr/lib/ruby/2.7.0/set.rb:328:in `each_key'
+	from /usr/lib/ruby/2.7.0/set.rb:328:in `each'
+	from /root/platin/lib/analysis/ipet.rb:1065:in `build_sstg'
+	from /root/platin/lib/analysis/wca.rb:200:in `analyze'
+	from /root/platin/lib/tools/wca.rb:87:in `run'
+	from /root/platin/lib/tools/wcet.rb:212:in `block in wcet_analysis_platin'
+	from /root/platin/lib/core/utils.rb:21:in `time'
+	from /root/platin/lib/tools/wcet.rb:200:in `wcet_analysis_platin'
+	from /root/platin/lib/tools/wcet.rb:191:in `wcet_analysis'
+	from /root/platin/lib/tools/wcet.rb:97:in `run_analysis'
+	from /root/platin/lib/tools/wcet.rb:436:in `run_in_outdir'
+	from /root/platin/lib/tools/wcet.rb:505:in `run'
+	from /root/platin/lib/tools/wcet.rb:574:in `<main>'
+make: *** [Makefile:8: analysis] Error 1
+[platin] WARNING: Commercial a3 tools is not available; use --disable-ait to hide this warning
+[platin] INFO: Finished Parsing PML Files                   in 2 ms
+[platin] WARNING: No instruction found at (gyro_reaction)0+47 instructions (addi)
+[platin] WARNING: No instruction found at (gyro_reaction)0+47 instructions (ret)
+[platin] WARNING: No instruction found at (ars_reaction)1+47 instructions (addi)
+[platin] WARNING: No instruction found at (ars_reaction)1+47 instructions (ret)
+[platin] WARNING: No instruction found at (sensor_fusion_reaction)3+58 instructions (lw)
+[platin] WARNING: No instruction found at (sensor_fusion_reaction)3+58 instructions (addi)
+[platin] WARNING: No instruction found at (sensor_fusion_reaction)3+58 instructions (ret)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (addi)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (ret)
+[platin] WARNING: No instruction found at (controller_startup_reaction)5+32 instructions (lw)
+[platin] WARNING: No instruction found at (controller_startup_reaction)5+32 instructions (lw)
+[platin] WARNING: No instruction found at (controller_startup_reaction)5+32 instructions (lw)
+[platin] WARNING: No instruction found at (controller_startup_reaction)5+32 instructions (lw)
+[platin] WARNING: No instruction found at (controller_startup_reaction)5+32 instructions (addi)
+[platin] WARNING: No instruction found at (controller_startup_reaction)5+32 instructions (ret)
+[platin] INFO: Finished Read Symbols                        in 10 ms
+[platin] INFO: Finished Flow Fact Transformation ["llvm.bc"] in 0 ms
+[platin] INFO: Finished Flow Fact Transformation ["user.bc"] in 0 ms
+[platin] INFO: Finished Flow Fact Transformation ["model.bc"] in 0 ms
+[platin] FATAL: At /root/platin/lib/core/utils.rb:228:in `die'
+[platin] FATAL: Unknown opcode: PseudoRET
+/root/platin/lib/core/utils.rb:232:in `die': I desire to die (Exception)
+	from /root/platin/lib/arch/flexpret.rb:250:in `cycle_cost'
+	from /root/platin/lib/arch/flexpret.rb:164:in `block in path_wcet'
+	from /root/platin/lib/arch/flexpret.rb:163:in `each'
+	from /root/platin/lib/arch/flexpret.rb:163:in `reduce'
+	from /root/platin/lib/arch/flexpret.rb:163:in `path_wcet'
+	from /root/platin/lib/analysis/wca.rb:70:in `edge_cost'
+	from /root/platin/lib/analysis/wca.rb:201:in `block in analyze'
+	from /root/platin/lib/analysis/ipet.rb:927:in `block in add_function_with_blocks'
+	from /root/platin/lib/analysis/ipet.rb:410:in `block in each_edge'
+	from /root/platin/lib/core/pmlbase.rb:178:in `each'
+	from /root/platin/lib/core/pmlbase.rb:178:in `each_with_index'
+	from /root/platin/lib/core/pmlbase.rb:178:in `each_with_index'
+	from /root/platin/lib/analysis/ipet.rb:405:in `each_edge'
+	from /root/platin/lib/analysis/ipet.rb:924:in `add_function_with_blocks'
+	from /root/platin/lib/analysis/ipet.rb:1066:in `block in build_sstg'
+	from /usr/lib/ruby/2.7.0/set.rb:328:in `each_key'
+	from /usr/lib/ruby/2.7.0/set.rb:328:in `each'
+	from /root/platin/lib/analysis/ipet.rb:1065:in `build_sstg'
+	from /root/platin/lib/analysis/wca.rb:200:in `analyze'
+	from /root/platin/lib/tools/wca.rb:87:in `run'
+	from /root/platin/lib/tools/wcet.rb:212:in `block in wcet_analysis_platin'
+	from /root/platin/lib/core/utils.rb:21:in `time'
+	from /root/platin/lib/tools/wcet.rb:200:in `wcet_analysis_platin'
+	from /root/platin/lib/tools/wcet.rb:191:in `wcet_analysis'
+	from /root/platin/lib/tools/wcet.rb:97:in `run_analysis'
+	from /root/platin/lib/tools/wcet.rb:436:in `run_in_outdir'
+	from /root/platin/lib/tools/wcet.rb:505:in `run'
+	from /root/platin/lib/tools/wcet.rb:574:in `<main>'
+make: *** [Makefile:8: analysis] Error 1
+[platin] WARNING: Commercial a3 tools is not available; use --disable-ait to hide this warning
+[platin] INFO: Finished Parsing PML Files                   in 3 ms
+[platin] WARNING: No instruction found at (gyro_reaction)0+47 instructions (addi)
+[platin] WARNING: No instruction found at (gyro_reaction)0+47 instructions (ret)
+[platin] WARNING: No instruction found at (ars_reaction)1+47 instructions (addi)
+[platin] WARNING: No instruction found at (ars_reaction)1+47 instructions (ret)
+[platin] WARNING: No instruction found at (sensor_fusion_reaction)3+58 instructions (lw)
+[platin] WARNING: No instruction found at (sensor_fusion_reaction)3+58 instructions (addi)
+[platin] WARNING: No instruction found at (sensor_fusion_reaction)3+58 instructions (ret)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (addi)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (ret)
+[platin] WARNING: No instruction found at (controller_startup_reaction)5+32 instructions (lw)
+[platin] WARNING: No instruction found at (controller_startup_reaction)5+32 instructions (lw)
+[platin] WARNING: No instruction found at (controller_startup_reaction)5+32 instructions (lw)
+[platin] WARNING: No instruction found at (controller_startup_reaction)5+32 instructions (lw)
+[platin] WARNING: No instruction found at (controller_startup_reaction)5+32 instructions (addi)
+[platin] WARNING: No instruction found at (controller_startup_reaction)5+32 instructions (ret)
+[platin] INFO: Finished Read Symbols                        in 10 ms
+[platin] INFO: Finished Flow Fact Transformation ["llvm.bc"] in 2 ms
+[platin] INFO: Finished Flow Fact Transformation ["user.bc"] in 0 ms
+[platin] INFO: Finished Flow Fact Transformation ["model.bc"] in 0 ms
+[platin] FATAL: At /root/platin/lib/core/utils.rb:228:in `die'
+[platin] FATAL: Unknown opcode: PseudoRET
+/root/platin/lib/core/utils.rb:232:in `die': I desire to die (Exception)
+	from /root/platin/lib/arch/flexpret.rb:250:in `cycle_cost'
+	from /root/platin/lib/arch/flexpret.rb:164:in `block in path_wcet'
+	from /root/platin/lib/arch/flexpret.rb:163:in `each'
+	from /root/platin/lib/arch/flexpret.rb:163:in `reduce'
+	from /root/platin/lib/arch/flexpret.rb:163:in `path_wcet'
+	from /root/platin/lib/analysis/wca.rb:70:in `edge_cost'
+	from /root/platin/lib/analysis/wca.rb:201:in `block in analyze'
+	from /root/platin/lib/analysis/ipet.rb:927:in `block in add_function_with_blocks'
+	from /root/platin/lib/analysis/ipet.rb:410:in `block in each_edge'
+	from /root/platin/lib/core/pmlbase.rb:178:in `each'
+	from /root/platin/lib/core/pmlbase.rb:178:in `each_with_index'
+	from /root/platin/lib/core/pmlbase.rb:178:in `each_with_index'
+	from /root/platin/lib/analysis/ipet.rb:405:in `each_edge'
+	from /root/platin/lib/analysis/ipet.rb:924:in `add_function_with_blocks'
+	from /root/platin/lib/analysis/ipet.rb:1066:in `block in build_sstg'
+	from /usr/lib/ruby/2.7.0/set.rb:328:in `each_key'
+	from /usr/lib/ruby/2.7.0/set.rb:328:in `each'
+	from /root/platin/lib/analysis/ipet.rb:1065:in `build_sstg'
+	from /root/platin/lib/analysis/wca.rb:200:in `analyze'
+	from /root/platin/lib/tools/wca.rb:87:in `run'
+	from /root/platin/lib/tools/wcet.rb:212:in `block in wcet_analysis_platin'
+	from /root/platin/lib/core/utils.rb:21:in `time'
+	from /root/platin/lib/tools/wcet.rb:200:in `wcet_analysis_platin'
+	from /root/platin/lib/tools/wcet.rb:191:in `wcet_analysis'
+	from /root/platin/lib/tools/wcet.rb:97:in `run_analysis'
+	from /root/platin/lib/tools/wcet.rb:436:in `run_in_outdir'
+	from /root/platin/lib/tools/wcet.rb:505:in `run'
+	from /root/platin/lib/tools/wcet.rb:574:in `<main>'
+make: *** [Makefile:8: analysis] Error 1
+[platin] WARNING: Commercial a3 tools is not available; use --disable-ait to hide this warning
+[platin] INFO: Finished Parsing PML Files                   in 2 ms
+[platin] WARNING: No instruction found at (gyro_reaction)0+47 instructions (addi)
+[platin] WARNING: No instruction found at (gyro_reaction)0+47 instructions (ret)
+[platin] WARNING: No instruction found at (ars_reaction)1+47 instructions (addi)
+[platin] WARNING: No instruction found at (ars_reaction)1+47 instructions (ret)
+[platin] WARNING: No instruction found at (sensor_fusion_reaction)3+58 instructions (lw)
+[platin] WARNING: No instruction found at (sensor_fusion_reaction)3+58 instructions (addi)
+[platin] WARNING: No instruction found at (sensor_fusion_reaction)3+58 instructions (ret)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (lw)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (addi)
+[platin] WARNING: No instruction found at (controller_run_reaction)4+89 instructions (ret)
+[platin] WARNING: No instruction found at (controller_startup_reaction)5+32 instructions (lw)
+[platin] WARNING: No instruction found at (controller_startup_reaction)5+32 instructions (lw)
+[platin] WARNING: No instruction found at (controller_startup_reaction)5+32 instructions (lw)
+[platin] WARNING: No instruction found at (controller_startup_reaction)5+32 instructions (lw)
+[platin] WARNING: No instruction found at (controller_startup_reaction)5+32 instructions (addi)
+[platin] WARNING: No instruction found at (controller_startup_reaction)5+32 instructions (ret)
+[platin] INFO: Finished Read Symbols                        in 11 ms
+[platin] INFO: Finished Flow Fact Transformation ["llvm.bc"] in 0 ms
+[platin] INFO: Finished Flow Fact Transformation ["user.bc"] in 0 ms
+[platin] INFO: Finished Flow Fact Transformation ["model.bc"] in 0 ms
+[platin] FATAL: At /root/platin/lib/core/utils.rb:228:in `die'
+[platin] FATAL: Unknown opcode: PseudoRET
+/root/platin/lib/core/utils.rb:232:in `die': I desire to die (Exception)
+	from /root/platin/lib/arch/flexpret.rb:250:in `cycle_cost'
+	from /root/platin/lib/arch/flexpret.rb:164:in `block in path_wcet'
+	from /root/platin/lib/arch/flexpret.rb:163:in `each'
+	from /root/platin/lib/arch/flexpret.rb:163:in `reduce'
+	from /root/platin/lib/arch/flexpret.rb:163:in `path_wcet'
+	from /root/platin/lib/analysis/wca.rb:70:in `edge_cost'
+	from /root/platin/lib/analysis/wca.rb:201:in `block in analyze'
+	from /root/platin/lib/analysis/ipet.rb:927:in `block in add_function_with_blocks'
+	from /root/platin/lib/analysis/ipet.rb:410:in `block in each_edge'
+	from /root/platin/lib/core/pmlbase.rb:178:in `each'
+	from /root/platin/lib/core/pmlbase.rb:178:in `each_with_index'
+	from /root/platin/lib/core/pmlbase.rb:178:in `each_with_index'
+	from /root/platin/lib/analysis/ipet.rb:405:in `each_edge'
+	from /root/platin/lib/analysis/ipet.rb:924:in `add_function_with_blocks'
+	from /root/platin/lib/analysis/ipet.rb:1066:in `block in build_sstg'
+	from /usr/lib/ruby/2.7.0/set.rb:328:in `each_key'
+	from /usr/lib/ruby/2.7.0/set.rb:328:in `each'
+	from /root/platin/lib/analysis/ipet.rb:1065:in `build_sstg'
+	from /root/platin/lib/analysis/wca.rb:200:in `analyze'
+	from /root/platin/lib/tools/wca.rb:87:in `run'
+	from /root/platin/lib/tools/wcet.rb:212:in `block in wcet_analysis_platin'
+	from /root/platin/lib/core/utils.rb:21:in `time'
+	from /root/platin/lib/tools/wcet.rb:200:in `wcet_analysis_platin'
+	from /root/platin/lib/tools/wcet.rb:191:in `wcet_analysis'
+	from /root/platin/lib/tools/wcet.rb:97:in `run_analysis'
+	from /root/platin/lib/tools/wcet.rb:436:in `run_in_outdir'
+	from /root/platin/lib/tools/wcet.rb:505:in `run'
+	from /root/platin/lib/tools/wcet.rb:574:in `<main>'
+make: *** [Makefile:8: analysis] Error 1

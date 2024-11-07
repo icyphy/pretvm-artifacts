@@ -7,7 +7,7 @@ pushd "${dir}"
 if [[ ! -d ${dir}/gems ]] ; then
         mkdir gems
         export GEM_HOME="${dir}/gems"
-        git clone https://gitlab.cs.fau.de/fusionclock/platin.git
+        git clone https://github.com/tanneberger/platin.git
         pushd platin
         ./setup.sh
         popd
