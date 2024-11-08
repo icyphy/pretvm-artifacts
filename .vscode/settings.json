@@ -1,0 +1,16 @@
+{
+  "files.associations": {
+    "Makefrag": "makefile",
+    "*.tcc": "c",
+    "chrono": "c",
+    "cmath": "c",
+    "format": "c",
+    "numeric": "c",
+    "ratio": "c",
+    "cinttypes": "c",
+    "cstdlib": "c",
+    "random": "c",
+    "limits": "c",
+    "algorithm": "c"
+  }
+}
