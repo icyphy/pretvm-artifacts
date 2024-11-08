@@ -4,7 +4,9 @@
  * @author Soroush Bateni
  * @author Hou Seng (Steven) Wong
  * @copyright (c) 2020-2023, The University of California at Berkeley.
- * License: <a href="https://github.com/lf-lang/reactor-c/blob/main/LICENSE.md">BSD 2-clause</a>
+ * License: <a
+ * href="https://github.com/lf-lang/reactor-c/blob/main/LICENSE.md">BSD
+ * 2-clause</a>
  * @brief Time and tag definitions and functions for Lingua Franca
  */
 
@@ -34,28 +36,29 @@
 #define NEVER_MICROSTEP 0u
 #define FOREVER ((interval_t)LLONG_MAX)
 #define FOREVER_MICROSTEP UINT_MAX
-#define NEVER_TAG                                                                                                      \
+#define NEVER_TAG                                                              \
   (tag_t) { .time = NEVER, .microstep = NEVER_MICROSTEP }
 // Need a separate initializer expression to comply with some C compilers
-#define NEVER_TAG_INITIALIZER                                                                                          \
+#define NEVER_TAG_INITIALIZER                                                  \
   { NEVER, NEVER_MICROSTEP }
-#define FOREVER_TAG                                                                                                    \
+#define FOREVER_TAG                                                            \
   (tag_t) { .time = FOREVER, .microstep = FOREVER_MICROSTEP }
 // Need a separate initializer expression to comply with some C compilers
-#define FOREVER_TAG_INITIALIZER                                                                                        \
+#define FOREVER_TAG_INITIALIZER                                                \
   { FOREVER, FOREVER_MICROSTEP }
-#define ZERO_TAG                                                                                                       \
+#define ZERO_TAG                                                               \
   (tag_t) { .time = 0LL, .microstep = 0u }
 
 // Returns true if timeout has elapsed.
-#define CHECK_TIMEOUT(start, duration) (lf_time_physical() > ((start) + (duration)))
+#define CHECK_TIMEOUT(start, duration)                                         \
+  (lf_time_physical() > ((start) + (duration)))
 
 // Convenience for converting times
 #define BILLION ((instant_t)1000000000LL)
 
-#include <stdint.h>
-#include <stddef.h>
 #include <limits.h>
+#include <stddef.h>
+#include <stdint.h>
 
 ////////////////  Type definitions
 
@@ -89,15 +92,15 @@ typedef struct {
  * Return the current tag, a logical time, microstep pair.
  * @param env A pointer to the environment from which we want the current tag.
  */
-tag_t lf_tag(void* env);
+tag_t lf_tag(void *env);
 
 /**
  * Add two tags.  If either tag has has NEVER or FOREVER in its time field, then
- * return NEVER_TAG or FOREVER_TAG, respectively. Also return NEVER_TAG or FOREVER_TAG
- * if the result underflows or overflows when adding the times.
- * If the microstep overflows, also return FOREVER_TAG.
- * If the time field of the second tag is greater than 0, then the microstep of the first tag
- * is reset to 0 before adding. This models the delay semantics in LF and makes this
+ * return NEVER_TAG or FOREVER_TAG, respectively. Also return NEVER_TAG or
+ * FOREVER_TAG if the result underflows or overflows when adding the times. If
+ * the microstep overflows, also return FOREVER_TAG. If the time field of the
+ * second tag is greater than 0, then the microstep of the first tag is reset to
+ * 0 before adding. This models the delay semantics in LF and makes this
  * addition operation non-commutative.
  * @param a The first tag.
  * @param b The second tag.
@@ -105,7 +108,8 @@ tag_t lf_tag(void* env);
 tag_t lf_tag_add(tag_t a, tag_t b);
 
 /**
- * @brief Return the sum of an interval and an instant, saturating on overflow and underflow.
+ * @brief Return the sum of an interval and an instant, saturating on overflow
+ * and underflow.
  *
  * @param a
  * @param b
@@ -170,7 +174,7 @@ tag_t lf_delay_strict(tag_t tag, interval_t interval);
  * @param env The environment from which we want the current logical time.
  * @return A time instant.
  */
-instant_t lf_time_logical(void* env);
+instant_t lf_time_logical(void *env);
 
 /**
  * Return the elapsed logical time in nanoseconds
@@ -178,7 +182,7 @@ instant_t lf_time_logical(void* env);
  * @param env The environment from which we want the elapsed logical time.
  * @return A time interval.
  */
-interval_t lf_time_logical_elapsed(void* env);
+interval_t lf_time_logical_elapsed(void *env);
 
 /**
  * Return the current physical time in nanoseconds.
@@ -197,9 +201,9 @@ instant_t lf_time_physical(void);
 instant_t lf_time_physical_elapsed(void);
 
 /**
- * Return the physical and logical time of the start of execution in nanoseconds.
- * On many platforms, this is the number of nanoseconds
- * since January 1, 1970, but it is actually platform dependent.
+ * Return the physical and logical time of the start of execution in
+ * nanoseconds. On many platforms, this is the number of nanoseconds since
+ * January 1, 1970, but it is actually platform dependent.
  * @return A time instant.
  */
 instant_t lf_time_start(void);
@@ -235,17 +239,18 @@ instant_t lf_time_start(void);
  * @param time The time to write.
  * @return The number of characters written (not counting the null terminator).
  */
-size_t lf_readable_time(char* buffer, instant_t time);
+size_t lf_readable_time(char *buffer, instant_t time);
 
 /**
- * Print a non-negative time value in nanoseconds with commas separating thousands
- * into the specified buffer. Ideally, this would use the locale to
+ * Print a non-negative time value in nanoseconds with commas separating
+ * thousands into the specified buffer. Ideally, this would use the locale to
  * use periods if appropriate, but I haven't found a sufficiently portable
  * way to do that.
- * @param buffer A buffer long enough to contain a string like "9,223,372,036,854,775,807".
+ * @param buffer A buffer long enough to contain a string like
+ * "9,223,372,036,854,775,807".
  * @param time A time value.
  * @return The number of characters written (not counting the null terminator).
  */
-size_t lf_comma_separated_time(char* buffer, instant_t time);
+size_t lf_comma_separated_time(char *buffer, instant_t time);
 
 #endif // TAG_H
