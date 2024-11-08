@@ -6,5 +6,5 @@ target_sources(${LF_MAIN_TARGET} PRIVATE
   ${stripped_source_path}/synthetic_data.c
 )
 target_include_directories(${LF_MAIN_TARGET} PRIVATE
-  ${LF_SOURCE_DIRECTORY}
+  ${stripped_source_path}
 )

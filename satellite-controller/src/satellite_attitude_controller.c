@@ -22,40 +22,36 @@ void gyro_reaction(IntVec3 *sample_ret) {
   }
 }
 
-void ars_reaction(IntVec3 *sample_ret) {
-  static int i = 0;
-  TAKE_TIME(200);
-  sample_ret->x = synthetic_ars[i][0];
-  sample_ret->y = synthetic_ars[i][1];
-  sample_ret->x = synthetic_ars[i][2];
-  if (i++ == NUM_ARS_SAMPLES) {
-    i = 0;
-  }
-}
-void sensor_fusion_startup_reaction(SensorFusionState *state) {
-  state->last_gyro = (IntVec3){0, 0, 0};
-  state->delta_t = 0.001 * FIXED_POINT_SCALE;
-}
+void sensor_fusion_reaction(SensorFusionState *state,
+                            int64_t current_logical_time, IntVec3 *gyro1,
+                            IntVec3 *gyro2, IntVec3 *angle,
+                            IntVec3 *angular_speed) {
+  int64_t delta_t_ns = current_logical_time - state->last_sample_time;
+  int delta_t = (delta_t_ns << FIXED_POINT_FRACTION_BITS) / 1000000000;
 
-void sensor_fusion_reaction(SensorFusionState *state, IntVec3 *gyro,
-                            IntVec3 *ars, IntVec3 *fusion_ret) {
-  // Expected current_angle based on ARS data.
-  IntVec3 ars_current_angle;
-  ars_current_angle.x = state->last_gyro.x + ((ars->x * state->delta_t) >>
-                                              FIXED_POINT_FRACTION_BITS);
-  ars_current_angle.y = state->last_gyro.y + ((ars->y * state->delta_t) >>
-                                              FIXED_POINT_FRACTION_BITS);
-  ars_current_angle.z = state->last_gyro.z + ((ars->z * state->delta_t) >>
-                                              FIXED_POINT_FRACTION_BITS);
+  IntVec3 gyro_avg = {(gyro1->x + gyro2->x) / 2, (gyro1->y + gyro2->y) / 2,
+                      (gyro1->z + gyro2->z) / 2};
 
-  // Do a weighted sum of the gyro and ARS data.
-  fusion_ret->x = (gyro->x + ars_current_angle.x) >> 1;
-  fusion_ret->y = (gyro->y + ars_current_angle.y) >> 1;
-  fusion_ret->z = (gyro->z + ars_current_angle.z) >> 1;
+  angle->x = state->last_angle.x +
+             ((gyro_avg.x * delta_t) >> FIXED_POINT_FRACTION_BITS);
+  angle->y = state->last_angle.y +
+             ((gyro_avg.y * delta_t) >> FIXED_POINT_FRACTION_BITS);
+  angle->z = state->last_angle.z +
+             ((gyro_avg.z * delta_t) >> FIXED_POINT_FRACTION_BITS);
+
+  angular_speed->x = gyro_avg.x;
+  angular_speed->y = gyro_avg.y;
+  angular_speed->z = gyro_avg.z;
+
+  state->last_angle.x = angle->x;
+  state->last_angle.y = angle->y;
+  state->last_angle.z = angle->z;
 }
 
 void controller_run_reaction(ControllerState *state, IntVec3 *current_angle,
+                             IntVec3 *current_angular_speed,
                              IntVec3 *motor_ret) {
+  (void)current_angular_speed;
   IntVec3 error;
 
   error.x = (current_angle->x - state->desired_angle.x);

@@ -1,6 +1,8 @@
 #ifndef SAT_ATTITUDE_CONTROLLER_H
 #define SAT_ATTITUDE_CONTROLLER_H
 
+#include <stdint.h>
+
 typedef struct {
   int x;
   int y;
@@ -12,17 +14,16 @@ typedef struct {
 #define FIXED_POINT_SCALE (1 << FIXED_POINT_FRACTION_BITS)
 
 void gyro_reaction(IntVec3 *sample_ret);
-void ars_reaction(IntVec3 *sample_ret);
 
 typedef struct {
-  IntVec3 last_gyro;
-  int delta_t;
+  IntVec3 last_angle;
+  int64_t last_sample_time;
 } SensorFusionState;
 
-void sensor_fusion_reaction(SensorFusionState *state, IntVec3 *gyro,
-                            IntVec3 *ars, IntVec3 *fusion_ret);
-
-void sensor_fusion_startup_reaction(SensorFusionState *state);
+void sensor_fusion_reaction(SensorFusionState *state,
+                            int64_t current_logical_time, IntVec3 *gyro1,
+                            IntVec3 *gyro2, IntVec3 *angle,
+                            IntVec3 *angular_speed);
 
 typedef struct {
   IntVec3 last_error;
@@ -34,6 +35,7 @@ typedef struct {
 } ControllerState;
 
 void controller_run_reaction(ControllerState *state, IntVec3 *current_angle,
+                             IntVec3 *current_angular_speed,
                              IntVec3 *motor_ret);
 void controller_startup_reaction(ControllerState *state, float Kp, float Ki,
                                  float Kd);
