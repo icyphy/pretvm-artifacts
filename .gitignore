@@ -2,4 +2,9 @@
 **/bin
 **/include
 **/src-gen
+**/*.o
+**/*.pml
+**/*.bin
+**/*.bc
+
 benchmarks/experiment-data
