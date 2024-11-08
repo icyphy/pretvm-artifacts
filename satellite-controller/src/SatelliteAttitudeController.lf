@@ -18,7 +18,7 @@ preamble {=
   #define LAG() (rdtime() - ((uint32_t)lf_time_logical()))
 
   // Convenience macro for printing out the lag of a module. Uncomment to enable
-  #define PRINT_LAGS
+  // #define PRINT_LAGS
   #ifdef PRINT_LAGS
   #define PRINT_LAG(module) lf_print("Lag in " #module " = %lu", LAG())
   #else
@@ -26,7 +26,7 @@ preamble {=
   #endif
 
   // Convenience macro to measure execution times of a module. Uncomment to enable
-  // #define MEASURE_EXECUTION_TIME280S
+  #define MEASURE_EXECUTION_TIMES
   #ifdef MEASURE_EXECUTION_TIMES
   #define EXEC_BEGIN() uint32_t __t1 = rdtime()
   #define EXEC_END() uint32_t __t2 = rdtime()
@@ -46,7 +46,7 @@ reactor Controller(Kp_float: float = 0.3, Ki_float: float = 0.1, Kd_float: float
     state _state: ControllerState
 
 
-    @wcet("100 usec")
+    @wcet("3 usec")
     reaction(startup) {=
       controller_startup_reaction(&self->_state, self->Kp_float, self->Ki_float, self->Kd_float);
       #ifndef NDEBUG
@@ -54,7 +54,7 @@ reactor Controller(Kp_float: float = 0.3, Ki_float: float = 0.1, Kd_float: float
       #endif
     =}
 
-    @wcet("100 usec")
+    @wcet("3 usec")
     reaction(desired_angle) {=
       controller_user_input_reaction(&self->_state, &desired_angle->value);
       #ifndef NDEBUG
@@ -62,9 +62,10 @@ reactor Controller(Kp_float: float = 0.3, Ki_float: float = 0.1, Kd_float: float
       #endif
     =}
 
-    @wcet("700 usec")
+    @wcet("173 usec")
     reaction(current_angle, current_angular_speed) -> control_signal {=
         EXEC_BEGIN();
+        PRINT_LAG(Controller);
         controller_run_reaction(&self->_state, &current_angle->value, &current_angular_speed->value, &control_signal->value);
         lf_set_present(control_signal);
         EXEC_END();
@@ -75,16 +76,16 @@ reactor Controller(Kp_float: float = 0.3, Ki_float: float = 0.1, Kd_float: float
 reactor Motor(freq: float=1000.0, lfDeadline: time = 100 usec) {
     input in:IntVec3
     
-    @wcet("100 usec")
+    @wcet("161 usec")
     reaction(in) {=
       EXEC_BEGIN();
       #ifndef NDEBUG
       lf_print("Got motor control input %i %i %i", in->value.x, in->value.y, in->value.z);
       #endif
+      // PRINT_LAG(Motor);
 
       motor_reaction(&in->value);
 
-      PRINT_LAG(Motor);
       EXEC_END();
       EXEC_REPORT(Motor);
     =} deadline(lfDeadline) {=
@@ -95,7 +96,7 @@ reactor Motor(freq: float=1000.0, lfDeadline: time = 100 usec) {
 
 reactor UserInput {
     output desired_angle: IntVec3;
-    @wcet("100 usec")
+    @wcet("1 usec")
     reaction(startup) -> desired_angle {=
         user_input_startup(&desired_angle->value);
         lf_set_present(desired_angle);
@@ -110,15 +111,16 @@ reactor SensorFusion {
     state _state: SensorFusionState
     state last_gyro: IntVec3
     state delta_t: int
-    @wcet("100 usec")
+    @wcet("89 usec")
     reaction(gyro1, gyro2) -> angle, angular_speed {=
         EXEC_BEGIN();
-        PRINT_LAG(SensorFusion);
-        sensor_fusion_reaction(&self->_state, lf_time_logical(), &gyro1->value, &gyro2->value, &angle->value, &angular_speed->value);
-        lf_set_present(angle);
-        lf_set_present(angular_speed);
+        angle->value.x = (int) gyro1->value.y  / (int) lf_time_logical();
         EXEC_END();
         EXEC_REPORT(SensorFusion);
+        // sensor_fusion_reaction(&self->_state, lf_time_logical(), &gyro1->value, &gyro2->value, &angle->value, &angular_speed->value);
+        PRINT_LAG(SensorFusion);
+        lf_set_present(angle);
+        // lf_set_present(angular_speed);
     =}
 }
 
@@ -126,14 +128,13 @@ reactor SensorFusion {
 reactor Gyroscope(period: time =10ms, lfDeadline: time = 1 usec) {
     timer t(10ms, period)
     output out: IntVec3
-    @wcet("500 usec")
+    @wcet("21 usec")
     reaction(t) -> out {=
         EXEC_BEGIN();
-        PRINT_LAG(Gyro);      
         gyro_reaction(&out->value);
-        lf_set_present(out);
         EXEC_END();
         EXEC_REPORT(Gyro);
+        lf_set_present(out);
     =} deadline(lfDeadline) {=
       lf_print_error_and_exit("deadline missed in Gyro, lag=%d", LAG());
     =}
