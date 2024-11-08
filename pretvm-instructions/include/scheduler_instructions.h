@@ -4,6 +4,9 @@
  */
 #ifndef SCHEDULER_INSTRUCTIONS_H
 #define SCHEDULER_INSTRUCTIONS_H
+#include <stdbool.h>
+#include "lf_types.h"
+#include <stddef.h>
 
 typedef enum {
   ADD,
