@@ -61,19 +61,18 @@ You can either build the docker image yourself or pull it from dockerhub.
 
 **Building it Yourself**
 ```bash
-    $ sudo docker build ./docker -t einspaten/rtas24:v1
+    $ sudo docker build ./docker -t einspaten/rtas25:v2
 ```
 
 **Pulling it from Dockerhub**
 ```bash
-    $ sudo docker pull einspaten/rtas24:v1
+    $ sudo docker pull einspaten/rtas25:v2
 ```
 
 **Using the Docker Image**
 ```bash
-    $ sudo docker run -ti -v ${PWD}/docker/:/root/rtas24/ -v ${PWD}/satellite-controller:/root/rtas24/satellite-controller einspaten/rtas24:v1
-    $ source /source.sh
+    $ sudo docker run -ti -v ${PWD}/docker/:/root/rtas25/ -v ${PWD}/satellite-controller:/root/rtas25/satellite-controller -v ${PWD}/pretvm-instructions:/root/rtas25/pretvm-instructions einspaten/rtas25:v2
     $ ./analyse-all.sh
 ```
 
-
+TODO: we should also add the source links here and how to run the script to compile and do WCET analysis
