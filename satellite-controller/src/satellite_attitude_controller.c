@@ -70,8 +70,8 @@ unsigned divide(unsigned dividend, unsigned divisor) {
   } else {
       return _divide(dividend, divisor);
   }
-
 }
+
 void gyro_reaction(IntVec3 *sample_ret) {
   static int i = 0;
 
