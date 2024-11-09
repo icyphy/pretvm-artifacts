@@ -1,11 +1,10 @@
 target C {
-  // scheduler: {
-  //   type: STATIC,
-  //   mapper: EGS
-  // },
+  scheduler: {
+    type: STATIC,
+    mapper: EGS
+  },
   build-type: Debug,
   platform: FlexPRET,
-  files : ["synthetic_data.c", "synthetic_data.h", "satellite_attitude_controller.c", "satellite_attitude_controller.h"],
   cmake-include: "SatelliteAttitudeController.cmake",
   workers: 2,
 }
@@ -27,7 +26,7 @@ preamble {=
   #endif
 
   // Convenience macro to measure execution times of a module. Uncomment to enable
-  // #define MEASURE_EXECUTION_TIMES
+  #define MEASURE_EXECUTION_TIMES
   #ifdef MEASURE_EXECUTION_TIMES
   #define EXEC_BEGIN() uint32_t __t1 = rdtime()
   #define EXEC_END() uint32_t __t2 = rdtime()
@@ -41,12 +40,13 @@ preamble {=
 
 reactor Controller(Kp_float: float = 0.3, Ki_float: float = 0.1, Kd_float: float = 0.0) {
     input current_angle: IntVec3
+    input current_angular_speed: IntVec3
     input desired_angle: IntVec3
     output control_signal: IntVec3
     state _state: ControllerState
 
 
-    @wcet("0 usec")
+    @wcet("3 usec")
     reaction(startup) {=
       controller_startup_reaction(&self->_state, self->Kp_float, self->Ki_float, self->Kd_float);
       #ifndef NDEBUG
@@ -54,7 +54,7 @@ reactor Controller(Kp_float: float = 0.3, Ki_float: float = 0.1, Kd_float: float
       #endif
     =}
 
-    @wcet("0 usec")
+    @wcet("3 usec")
     reaction(desired_angle) {=
       controller_user_input_reaction(&self->_state, &desired_angle->value);
       #ifndef NDEBUG
@@ -62,29 +62,30 @@ reactor Controller(Kp_float: float = 0.3, Ki_float: float = 0.1, Kd_float: float
       #endif
     =}
 
-    @wcet("700 usec")
-    reaction(current_angle) -> control_signal {=
+    @wcet("173 usec")
+    reaction(current_angle, current_angular_speed) -> control_signal {=
         EXEC_BEGIN();
-        controller_run_reaction(&self->_state, &current_angle->value, &control_signal->value);
+        PRINT_LAG(Controller);
+        controller_run_reaction(&self->_state, &current_angle->value, &current_angular_speed->value, &control_signal->value);
         lf_set_present(control_signal);
         EXEC_END();
         EXEC_REPORT(Controller);
     =} 
 }
 
-reactor Motor(freq: float=1000.0, lfDeadline: time = 10 ms) {
+reactor Motor(freq: float=1000.0, lfDeadline: time = 100 usec) {
     input in:IntVec3
     
-    @wcet("100 usec")
+    @wcet("161 usec")
     reaction(in) {=
       EXEC_BEGIN();
       #ifndef NDEBUG
       lf_print("Got motor control input %i %i %i", in->value.x, in->value.y, in->value.z);
       #endif
+      // PRINT_LAG(Motor);
 
       motor_reaction(&in->value);
 
-      PRINT_LAG(Motor);
       EXEC_END();
       EXEC_REPORT(Motor);
     =} deadline(lfDeadline) {=
@@ -95,80 +96,61 @@ reactor Motor(freq: float=1000.0, lfDeadline: time = 10 ms) {
 
 reactor UserInput {
     output desired_angle: IntVec3;
-    @wcet("25 usec")
+    @wcet("1 usec")
     reaction(startup) -> desired_angle {=
         user_input_startup(&desired_angle->value);
         lf_set_present(desired_angle);
     =}
 }
 
-reactor Gyroscope(period: time =10ms) {
-    timer t(10ms, period)
-    output out: IntVec3
-    state cnt: int = 0
-    preamble{=
-      #include "synthetic_data.h"
-    =}
-
-    @wcet("50 usec")
-    reaction(t) -> out {=
-        EXEC_BEGIN();
-        PRINT_LAG(Gyro);      
-        gyro_reaction(&out->value);
-        lf_set_present(out);
-        EXEC_END();
-        EXEC_REPORT(Gyro);
-    =}
-}
-
 reactor SensorFusion {
-    input gyro: IntVec3
-    input ars: IntVec3
-    output out: IntVec3
+    input gyro1: IntVec3
+    input gyro2: IntVec3
+    output angle: IntVec3
+    output angular_speed: IntVec3
     state _state: SensorFusionState
     state last_gyro: IntVec3
     state delta_t: int
-    @wcet("0 usec")
-    reaction(startup) {=
-        sensor_fusion_startup_reaction(&self->_state);
-    =}
-
-    @wcet("10 usec")
-    reaction(gyro, ars) -> out {=
+    @wcet("89 usec")
+    reaction(gyro1, gyro2) -> angle, angular_speed {=
         EXEC_BEGIN();
-        PRINT_LAG(SensorFusion);
-        sensor_fusion_reaction(&self->_state, &gyro->value, &ars->value, &out->value);
-        lf_set_present(out);
+        angle->value.x = (int) gyro1->value.y  / (int) lf_time_logical();
         EXEC_END();
         EXEC_REPORT(SensorFusion);
+        // sensor_fusion_reaction(&self->_state, lf_time_logical(), &gyro1->value, &gyro2->value, &angle->value, &angular_speed->value);
+        PRINT_LAG(SensorFusion);
+        lf_set_present(angle);
+        // lf_set_present(angular_speed);
     =}
 }
 
-reactor AngularRateSensor(period: time =10ms) {
+
+reactor Gyroscope(period: time =10ms, lfDeadline: time = 1 usec) {
     timer t(10ms, period)
     output out: IntVec3
-
-    @wcet("50 usec")
+    @wcet("21 usec")
     reaction(t) -> out {=
         EXEC_BEGIN();
-        PRINT_LAG(ARS);
-        ars_reaction(&out->value);
-        lf_set_present(out);
+        gyro_reaction(&out->value);
         EXEC_END();
-        EXEC_REPORT(ARS);
+        EXEC_REPORT(Gyro);
+        lf_set_present(out);
+    =} deadline(lfDeadline) {=
+      lf_print_error_and_exit("deadline missed in Gyro, lag=%d", LAG());
     =}
 }
 
 main reactor {
   controller = new Controller()
   userInput = new UserInput()
-  gyro = new Gyroscope(period=10ms)
-  ars = new AngularRateSensor(period=10ms)
+  gyro1 = new Gyroscope(period=10ms, lfDeadline=30 usec)
+  gyro2 = new Gyroscope(period=10ms, lfDeadline=30 usec)
   motor = new Motor(lfDeadline=10ms)
-  fusion = new SensorFusion()
-
-  ars.out, gyro.out -> fusion.ars, fusion.gyro
-  fusion.out -> controller.current_angle
+  sensorFusion = new SensorFusion()
+  gyro1.out, gyro2.out -> sensorFusion.gyro1, sensorFusion.gyro2
+  sensorFusion.angle -> controller.current_angle
+  sensorFusion.angular_speed -> controller.current_angular_speed
+  
 
   userInput.desired_angle -> controller.desired_angle
   controller.control_signal -> motor.in

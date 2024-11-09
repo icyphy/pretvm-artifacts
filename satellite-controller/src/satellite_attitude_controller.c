@@ -1,3 +1,6 @@
+#include <limits.h>
+#include <stdbool.h>
+
 #include "satellite_attitude_controller.h"
 #include "synthetic_data.h"
 
@@ -10,52 +13,112 @@
     }                             \
   } while (0)
 
+// Integer multiplication using bitwise operations. Needed because platin can
+// not handle the libc implementations.
+int multiply(int a, int b) {
+  int result = 0;
+
+#pragma loopbound min 1 max 32
+  while (b > 0) {
+    if (b & 1) {
+      result += a;
+    }
+    a <<= 1;
+    b >>= 1;
+  }
+
+  return result;
+}
+
+unsigned _divide(unsigned dividend, unsigned divisor) {
+  unsigned current = 1;
+  unsigned answer = 0;
+  unsigned ret = 0;
+
+
+  if (divisor == dividend) {
+    return 1;
+  }
+
+#pragma loopbound min 1 max 32
+  while (divisor <= dividend) {
+    divisor <<= 1;
+    current <<= 1;
+  }
+
+  divisor >>= 1;
+  current >>= 1;
+
+#pragma loopbound min 1 max 32
+  while (current != 0) {
+    if (dividend >= divisor) {
+      dividend -= divisor;
+      answer |= current;
+    }
+    current >>= 1;
+    divisor >>= 1;
+  }
+  return answer;
+}
+
+// Integer division using bitwise operations. Needed because platin can not
+// handle the libc implementations.
+unsigned divide(unsigned dividend, unsigned divisor) {
+  if ( divisor > dividend)
+  {
+      return 0;
+  } else {
+      return _divide(dividend, divisor);
+  }
+
+}
 void gyro_reaction(IntVec3 *sample_ret) {
   static int i = 0;
 
-  TAKE_TIME(200);
-  sample_ret->x = synthetic_gyro[i][0];
-  sample_ret->y = synthetic_gyro[i][1];
-  sample_ret->x = synthetic_gyro[i][2];
+  int base_idx = multiply(i, 3);
+  int *sample = synthetic_gyro[base_idx];
+  sample_ret->x = *sample;
+  sample++;
+  sample_ret->y = *sample;
+  sample++;
+  sample_ret->x = *sample;
   if (i++ == NUM_GYRO_SAMPLES) {
     i = 0;
   }
 }
 
-void ars_reaction(IntVec3 *sample_ret) {
-  static int i = 0;
-  TAKE_TIME(200);
-  sample_ret->x = synthetic_ars[i][0];
-  sample_ret->y = synthetic_ars[i][1];
-  sample_ret->x = synthetic_ars[i][2];
-  if (i++ == NUM_ARS_SAMPLES) {
-    i = 0;
-  }
-}
-void sensor_fusion_startup_reaction(SensorFusionState *state) {
-  state->last_gyro = (IntVec3){0, 0, 0};
-  state->delta_t = 0.001 * FIXED_POINT_SCALE;
-}
+void sensor_fusion_reaction(SensorFusionState *state,
+                            int64_t current_logical_time, IntVec3 *gyro1,
+                            IntVec3 *gyro2, IntVec3 *angle,
 
-void sensor_fusion_reaction(SensorFusionState *state, IntVec3 *gyro,
-                            IntVec3 *ars, IntVec3 *fusion_ret) {
-  // Expected current_angle based on ARS data.
-  IntVec3 ars_current_angle;
-  ars_current_angle.x = state->last_gyro.x + ((ars->x * state->delta_t) >>
-                                              FIXED_POINT_FRACTION_BITS);
-  ars_current_angle.y = state->last_gyro.y + ((ars->y * state->delta_t) >>
-                                              FIXED_POINT_FRACTION_BITS);
-  ars_current_angle.z = state->last_gyro.z + ((ars->z * state->delta_t) >>
-                                              FIXED_POINT_FRACTION_BITS);
+                            IntVec3 *angular_speed) {
+  int64_t delta_t_ns = current_logical_time - state->last_sample_time;
+  int delta_t =
+      divide((unsigned)(delta_t_ns << FIXED_POINT_FRACTION_BITS), 1000000000);
 
-  // Do a weighted sum of the gyro and ARS data.
-  fusion_ret->x = (gyro->x + ars_current_angle.x) >> 1;
-  fusion_ret->y = (gyro->y + ars_current_angle.y) >> 1;
-  fusion_ret->z = (gyro->z + ars_current_angle.z) >> 1;
+  IntVec3 gyro_avg = {(gyro1->x + gyro2->x) >> 1, (gyro1->y + gyro2->y) >> 1,
+                      (gyro1->z + gyro2->z) >> 1};
+
+  angle->x = state->last_angle.x +
+             (multiply(gyro_avg.x, delta_t) >> FIXED_POINT_FRACTION_BITS);
+  angle->y = state->last_angle.y +
+             (multiply(gyro_avg.y, delta_t) >> FIXED_POINT_FRACTION_BITS);
+  angle->z = state->last_angle.z +
+             (multiply(gyro_avg.z, delta_t) >> FIXED_POINT_FRACTION_BITS);
+
+  angular_speed->x = gyro_avg.x;
+  angular_speed->y = gyro_avg.y;
+  angular_speed->z = gyro_avg.z;
+
+  state->last_angle.x = angle->x;
+  state->last_angle.y = angle->y;
+  state->last_angle.z = angle->z;
 }
 
 void controller_run_reaction(ControllerState *state, IntVec3 *current_angle,
+                             IntVec3 *current_angular_speed,
                              IntVec3 *motor_ret) {
+  (void)current_angular_speed;
   IntVec3 error;
 
   error.x = (current_angle->x - state->desired_angle.x);
@@ -65,20 +128,20 @@ void controller_run_reaction(ControllerState *state, IntVec3 *current_angle,
   state->error_accumulated.y += error.y;
   state->error_accumulated.z += error.z;
 
-  motor_ret->x = ((state->Kp * error.x) >> FIXED_POINT_FRACTION_BITS) +
-                 ((state->Ki * state->error_accumulated.x) >>
+  motor_ret->x = (multiply(state->Kp, error.x) >> FIXED_POINT_FRACTION_BITS) +
+                 (multiply(state->Kp, state->error_accumulated.x) >>
                   FIXED_POINT_FRACTION_BITS)  // integral component
-                 + ((state->Kd * (state->last_error.x - error.x)) >>
+                 + (multiply(state->Kd, (state->last_error.x - error.x)) >>
                     FIXED_POINT_FRACTION_BITS);  // differential component
-  motor_ret->y = ((state->Kp * error.y) >> FIXED_POINT_FRACTION_BITS) +
-                 ((state->Ki * state->error_accumulated.y) >>
+  motor_ret->y = (multiply(state->Kp, error.y) >> FIXED_POINT_FRACTION_BITS) +
+                 (multiply(state->Ki, state->error_accumulated.y) >>
                   FIXED_POINT_FRACTION_BITS)  // integral component
-                 + ((state->Kd * (state->last_error.y - error.y)) >>
+                 + (multiply(state->Kd, (state->last_error.y - error.y)) >>
                     FIXED_POINT_FRACTION_BITS);  // differential component
-  motor_ret->z = ((state->Kp * error.z) >> FIXED_POINT_FRACTION_BITS) +
-                 ((state->Ki * state->error_accumulated.z) >>
+  motor_ret->z = (multiply(state->Kp, error.z) >> FIXED_POINT_FRACTION_BITS) +
+                 (multiply(state->Ki, state->error_accumulated.z) >>
                   FIXED_POINT_FRACTION_BITS)  // integral component
-                 + ((state->Kd * (state->last_error.z - error.z)) >>
+                 + (multiply(state->Kd, (state->last_error.z - error.z)) >>
                     FIXED_POINT_FRACTION_BITS);
 
   state->last_error.x = error.x;
