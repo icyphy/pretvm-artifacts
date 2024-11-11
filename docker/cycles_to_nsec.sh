@@ -1,9 +1,11 @@
 #!/bin/bash
 
 result_file=$1
+result_file_final=$2
 nsec_per_cycle=40
 temp_file="temp.txt"
 > "$temp_file"
+> "$result_file_final"
 
 # Parse the result file and calculate the WCET in nanoseconds
 while IFS= read -r line; do
@@ -16,4 +18,4 @@ while IFS= read -r line; do
   echo "$line" >> "$temp_file"
 done < "$result_file"
 
-mv $temp_file $result_file
+mv $temp_file $result_file_final
