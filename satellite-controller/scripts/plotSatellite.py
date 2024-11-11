@@ -1,7 +1,25 @@
 import sys
+import matplotlib
 import matplotlib.pyplot as plt
 
+matplotlib.rcParams.update({
+    'font.size': 12,          # Default text size
+    'axes.titlesize': 15,     # Title font size
+    'axes.labelsize': 15,     # Axis label font size
+    'xtick.labelsize': 15,    # X-axis tick label font size
+    'ytick.labelsize': 15,    # Y-axis tick label font size
+    'legend.fontsize': 12,    # Legend font size
+    'figure.titlesize': 16    # Figure title font size
+})
+
+figsize = (8,7)
+alpha=0.7
+
+# Result file
 file = sys.argv[1]
+
+# Output path
+output = sys.argv[2]
 
 results = {}
 
@@ -51,16 +69,15 @@ global_min = min(all_values)
 global_max = max(all_values)
 bin_width = 7  # Define the bin width
 bins = range(global_min, global_max + bin_width, bin_width)
-alpha=0.7
 
 # Create 3x3 subplots
-fig, axs = plt.subplots(4, 2, figsize=(8, 6))
-fig.suptitle('Satellite controller execution statistics')
+fig, axs = plt.subplots(4, 2, figsize=figsize)
+# fig.suptitle('Satellite controller execution statistics')
 
 # Plot histograms for each module
 for i, (module, data) in enumerate(results.items()):
     ax = axs[i][0]
-    ax.hist(data["exec_time"], bins=bins, alpha=alpha)
+    ax.hist(data["exec_time"], bins=bins, alpha=alpha, align='left')
     wcet = data["wcet"]
     if wcet > 0:
         ax.axvline(wcet, color='r', linestyle='solid', linewidth=1, label='WCET')
@@ -72,7 +89,7 @@ for i, (module, data) in enumerate(results.items()):
     ax.set_ylabel(module, rotation=90)
 
     ax = axs[i][1]
-    ax.hist(data["completion"], bins=bins, alpha=0.8)
+    ax.hist(data["completion"], bins=bins, alpha=alpha, align='left')
     deadline = data["deadline"]
     if deadline > 0:
         ax.axvline(deadline, color='r', linestyle='solid', linewidth=1, label='Deadline')
@@ -89,5 +106,5 @@ for i, (module, data) in enumerate(results.items()):
 
 
 plt.tight_layout()
-plt.savefig('satellite_controller_stats.pdf')
+plt.savefig(f'{output}/satellite_controller_stats.pdf')
 # plt.show()
