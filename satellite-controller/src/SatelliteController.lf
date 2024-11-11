@@ -9,15 +9,15 @@ target C {
 }
 
 reactor Controller(Kp_float: float = 0.3, Ki_float: float = 0.1, Kd_float: float = 0.0) {
-    input current_angle: IntVec3
-    input current_angular_speed: IntVec3
+    input angle: IntVec3
+    input angular_speed: IntVec3
     input desired_angle: IntVec3
-    output control_signal: IntVec3
+    output out: IntVec3
 
     @wcet("1 usec")
     reaction(desired_angle) {= =}
     @wcet("173 usec")
-    reaction(current_angle, current_angular_speed) -> control_signal {= =} 
+    reaction(angle, angular_speed) -> out {= =} 
 
     @wcet("1 msec")
     reaction(shutdown)  {= =}
@@ -30,21 +30,19 @@ reactor Motor(lfDeadline: time = 100 usec) {
 }
 
 reactor UserInput {
-    output desired_angle: IntVec3;
+    output out: IntVec3;
     @wcet("1 usec")
-    reaction(startup) -> desired_angle {= =}
+    reaction(startup) -> out {= =}
 }
 
 reactor SensorFusion {
-    input gyro1: IntVec3
-    input gyro2: IntVec3
-    output angle: IntVec3
-    output angular_speed: IntVec3
+    input i1: IntVec3
+    input i2: IntVec3
+    output o1: IntVec3
+    output o2: IntVec3
 
     @wcet("62 usec")
-    reaction(gyro1, gyro2) -> angle, angular_speed {= =}
-    @wcet("1 msec")
-    reaction(shutdown){= =}
+    reaction(i1, i2) -> o1, o2 {= =}
 }
 
 
@@ -57,15 +55,15 @@ reactor Gyroscope(period: time =1ms, lfDeadline: time = 1 usec) {
 }
 
 main reactor {
-  controller = new Controller()
-  userInput = new UserInput()
   gyro1 = new Gyroscope(period=1ms, lfDeadline=20 usec)
   gyro2 = new Gyroscope(period=1ms, lfDeadline=20 usec)
-  motor = new Motor(lfDeadline=300 usec)
+  userInput = new UserInput()
   sensorFusion = new SensorFusion()
-  gyro1.out, gyro2.out -> sensorFusion.gyro1, sensorFusion.gyro2
-  sensorFusion.angle -> controller.current_angle
-  sensorFusion.angular_speed -> controller.current_angular_speed
-  userInput.desired_angle -> controller.desired_angle
-  controller.control_signal -> motor.in
+  controller = new Controller()
+  motor = new Motor(lfDeadline=300 usec)
+  gyro1.out, gyro2.out -> sensorFusion.i1, sensorFusion.i2
+  sensorFusion.o1 -> controller.angle
+  sensorFusion.o2 -> controller.angular_speed
+  userInput.out -> controller.desired_angle
+  controller.out -> motor.in
 }
