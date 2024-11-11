@@ -17,14 +17,13 @@ void gyro_reaction(IntVec3 *sample_ret);
 
 typedef struct {
   IntVec3 last_angle;
-  int64_t last_sample_time;
-  int delta_t_fixed_point;
+  unsigned int delta_t;
 } SensorFusionState;
 
 void sensor_fusion_startup_reaction(SensorFusionState *state, int64_t delta_t);
 
 void sensor_fusion_reaction(SensorFusionState *state,
-                            int64_t current_logical_time, IntVec3 *gyro1,
+                            IntVec3 *gyro1,
                             IntVec3 *gyro2, IntVec3 *angle,
                             IntVec3 *angular_speed);
 
