@@ -28,7 +28,7 @@
   do {                                                                        \
     lf_print("Module=" #module);                                              \
     for (int i = 0; i < NUM_ITER; i++) {                                      \
-      lf_print("Iteration %i: Start lag = %d, Execution time = %d, Completion lag = %d", i, \
+      lf_print("Iteration_%i Start_lag=%d Execution_time=%d Completion_lag=%d", i, \
                self->start_lag[i], self->execution_time[i], self->completion_lag[i]);             \
     }                                                                         \
   } while (0)

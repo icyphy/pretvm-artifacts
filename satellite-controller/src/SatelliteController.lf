@@ -1,0 +1,71 @@
+target C {
+  scheduler: {
+    type: STATIC,
+    mapper: EGS
+  },
+  build-type: Release,
+  platform: FlexPRET,
+  workers: 2,
+}
+
+reactor Controller(Kp_float: float = 0.3, Ki_float: float = 0.1, Kd_float: float = 0.0) {
+    input current_angle: IntVec3
+    input current_angular_speed: IntVec3
+    input desired_angle: IntVec3
+    output control_signal: IntVec3
+
+    @wcet("1 usec")
+    reaction(desired_angle) {= =}
+    @wcet("173 usec")
+    reaction(current_angle, current_angular_speed) -> control_signal {= =} 
+
+    @wcet("1 msec")
+    reaction(shutdown)  {= =}
+}
+
+reactor Motor(lfDeadline: time = 100 usec) {
+    input in:IntVec3
+    @wcet("2 usec")
+    reaction(in) {= =} deadline(lfDeadline) {= =}
+}
+
+reactor UserInput {
+    output desired_angle: IntVec3;
+    @wcet("1 usec")
+    reaction(startup) -> desired_angle {= =}
+}
+
+reactor SensorFusion {
+    input gyro1: IntVec3
+    input gyro2: IntVec3
+    output angle: IntVec3
+    output angular_speed: IntVec3
+
+    @wcet("62 usec")
+    reaction(gyro1, gyro2) -> angle, angular_speed {= =}
+    @wcet("1 msec")
+    reaction(shutdown){= =}
+}
+
+
+reactor Gyroscope(period: time =1ms, lfDeadline: time = 1 usec) {
+    timer t(10msec, period)
+    output out: IntVec3
+
+    @wcet("21 usec")
+    reaction(t) -> out {= =}  deadline(lfDeadline) {= =}
+}
+
+main reactor {
+  controller = new Controller()
+  userInput = new UserInput()
+  gyro1 = new Gyroscope(period=1ms, lfDeadline=20 usec)
+  gyro2 = new Gyroscope(period=1ms, lfDeadline=20 usec)
+  motor = new Motor(lfDeadline=500 usec)
+  sensorFusion = new SensorFusion()
+  gyro1.out, gyro2.out -> sensorFusion.gyro1, sensorFusion.gyro2
+  sensorFusion.angle -> controller.current_angle
+  sensorFusion.angular_speed -> controller.current_angular_speed
+  userInput.desired_angle -> controller.desired_angle
+  controller.control_signal -> motor.in
+}
