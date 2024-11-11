@@ -61,7 +61,7 @@ main reactor {
   userInput = new UserInput()
   gyro1 = new Gyroscope(period=1ms, lfDeadline=20 usec)
   gyro2 = new Gyroscope(period=1ms, lfDeadline=20 usec)
-  motor = new Motor(lfDeadline=500 usec)
+  motor = new Motor(lfDeadline=300 usec)
   sensorFusion = new SensorFusion()
   gyro1.out, gyro2.out -> sensorFusion.gyro1, sensorFusion.gyro2
   sensorFusion.angle -> controller.current_angle
