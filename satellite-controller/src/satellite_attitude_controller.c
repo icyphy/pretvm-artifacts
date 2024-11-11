@@ -1,5 +1,6 @@
 #include <limits.h>
 #include <stdbool.h>
+#include <stdio.h>
 
 #include "satellite_attitude_controller.h"
 #include "synthetic_data.h"
@@ -15,17 +16,22 @@
 
 // Integer multiplication using bitwise operations. Needed because platin can
 // not handle the libc implementations.
-int multiply(int a, int b) {
+unsigned int multiply(unsigned int a, unsigned int b) {
+  // printf("a: %d, b: %d\n", a, b);
   int result = 0;
 
 #pragma loopbound min 1 max 32
   while (b > 0) {
     if (b & 1) {
       result += a;
+      // printf("b=1 result=%d\n",result);
+    } else {
+      // printf("b=0\n");
     }
     a <<= 1;
     b >>= 1;
   }
+  // printf("result: %d\n", result);
 
   return result;
 }
@@ -70,8 +76,8 @@ unsigned divide(unsigned dividend, unsigned divisor) {
   } else {
       return _divide(dividend, divisor);
   }
-
 }
+
 void gyro_reaction(IntVec3 *sample_ret) {
   static int i = 0;
 
@@ -81,30 +87,25 @@ void gyro_reaction(IntVec3 *sample_ret) {
   sample++;
   sample_ret->y = *sample;
   sample++;
-  sample_ret->x = *sample;
+  sample_ret->z = *sample;
   if (i++ == NUM_GYRO_SAMPLES) {
     i = 0;
   }
 }
 
 void sensor_fusion_reaction(SensorFusionState *state,
-                            int64_t current_logical_time, IntVec3 *gyro1,
+                            IntVec3 *gyro1,
                             IntVec3 *gyro2, IntVec3 *angle,
-
                             IntVec3 *angular_speed) {
-  int64_t delta_t_ns = current_logical_time - state->last_sample_time;
-  int delta_t =
-      divide((unsigned)(delta_t_ns << FIXED_POINT_FRACTION_BITS), 1000000000);
-
   IntVec3 gyro_avg = {(gyro1->x + gyro2->x) >> 1, (gyro1->y + gyro2->y) >> 1,
                       (gyro1->z + gyro2->z) >> 1};
 
   angle->x = state->last_angle.x +
-             (multiply(gyro_avg.x, delta_t) >> FIXED_POINT_FRACTION_BITS);
+             (multiply(gyro_avg.x, state->delta_t) >> FIXED_POINT_FRACTION_BITS);
   angle->y = state->last_angle.y +
-             (multiply(gyro_avg.y, delta_t) >> FIXED_POINT_FRACTION_BITS);
+             (multiply(gyro_avg.y, state->delta_t) >> FIXED_POINT_FRACTION_BITS);
   angle->z = state->last_angle.z +
-             (multiply(gyro_avg.z, delta_t) >> FIXED_POINT_FRACTION_BITS);
+             (multiply(gyro_avg.z, state->delta_t) >> FIXED_POINT_FRACTION_BITS);
 
   angular_speed->x = gyro_avg.x;
   angular_speed->y = gyro_avg.y;
@@ -124,6 +125,7 @@ void controller_run_reaction(ControllerState *state, IntVec3 *current_angle,
   error.x = (current_angle->x - state->desired_angle.x);
   error.y = (current_angle->y - state->desired_angle.y);
   error.z = (current_angle->z - state->desired_angle.z);
+
   state->error_accumulated.x += error.x;
   state->error_accumulated.y += error.y;
   state->error_accumulated.z += error.z;
@@ -164,7 +166,6 @@ void controller_user_input_reaction(ControllerState *state,
 
 void motor_reaction(IntVec3 *control_signal) {
   (void)control_signal;
-  TAKE_TIME(400);
 }
 
 void user_input_startup(IntVec3 *desired_angle) {

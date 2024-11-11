@@ -1,41 +1,25 @@
 target C {
   scheduler: {
     type: STATIC,
-    mapper: EGS
+    mapper: LB
   },
-  build-type: Debug,
+  build-type: Release,
   platform: FlexPRET,
+  // logging: Debug,
   cmake-include: "SatelliteAttitudeController.cmake",
-  workers: 2,
+  workers: 1,
+  timeout: 64msec
 }
 
 preamble {=
   #include <string.h>
-  #include <flexpret/flexpret.h>
   #include "satellite_attitude_controller.h"
 
-  // Conveneince macros for calculating the current lag
-  #define LAG() (rdtime() - ((uint32_t)lf_time_logical()))
-
-  // Convenience macro for printing out the lag of a module. Uncomment to enable
-  // #define PRINT_LAGS
-  #ifdef PRINT_LAGS
-  #define PRINT_LAG(module) lf_print("Lag in " #module " = %lu", LAG())
-  #else
-  #define PRINT_LAG(module) 
-  #endif
-
-  // Convenience macro to measure execution times of a module. Uncomment to enable
+  #define NUM_ITER 10
   #define MEASURE_EXECUTION_TIMES
-  #ifdef MEASURE_EXECUTION_TIMES
-  #define EXEC_BEGIN() uint32_t __t1 = rdtime()
-  #define EXEC_END() uint32_t __t2 = rdtime()
-  #define EXEC_REPORT(module) lf_print("Execution time of " #module " = %lu", __t2 - __t1) 
-  #else
-  #define EXEC_BEGIN()
-  #define EXEC_END()
-  #define EXEC_REPORT(module)
-  #endif
+// #define PRINT_LAGS
+  
+  #include "instrumentation.h"
 =}
 
 reactor Controller(Kp_float: float = 0.3, Ki_float: float = 0.1, Kd_float: float = 0.0) {
@@ -44,10 +28,18 @@ reactor Controller(Kp_float: float = 0.3, Ki_float: float = 0.1, Kd_float: float
     input desired_angle: IntVec3
     output control_signal: IntVec3
     state _state: ControllerState
+    state completion_lag: int*
+    state execution_time: int*
+    state start_lag: int*
+    state num_iter: int = 0
 
 
     @wcet("3 usec")
     reaction(startup) {=
+      self->completion_lag = (int*)calloc(NUM_ITER, sizeof(int));
+      self->execution_time = (int*)calloc(NUM_ITER, sizeof(int));
+      self->start_lag = (int*)calloc(NUM_ITER, sizeof(int));
+
       controller_startup_reaction(&self->_state, self->Kp_float, self->Ki_float, self->Kd_float);
       #ifndef NDEBUG
       lf_print("Controller gains: Kp=%i Ki=%i Kd=%i", self->_state.Kp, self->_state.Ki, self->_state.Kd);
@@ -66,15 +58,34 @@ reactor Controller(Kp_float: float = 0.3, Ki_float: float = 0.1, Kd_float: float
     reaction(current_angle, current_angular_speed) -> control_signal {=
         EXEC_BEGIN();
         PRINT_LAG(Controller);
+        #ifndef NDEBUG
+          lf_print("Got current_angle=%i %i %i", current_angle->value.x, current_angle->value.y, current_angle->value.z);
+        #endif
+        
         controller_run_reaction(&self->_state, &current_angle->value, &current_angular_speed->value, &control_signal->value);
         lf_set_present(control_signal);
         EXEC_END();
-        EXEC_REPORT(Controller);
     =} 
+
+    reaction(shutdown)  {=
+      EXEC_REPORT(Controller);
+    =}
 }
 
-reactor Motor(freq: float=1000.0, lfDeadline: time = 100 usec) {
+reactor Motor(lfDeadline: time = 100 usec) {
     input in:IntVec3
+
+    state completion_lag: int*
+    state execution_time: int*
+    state start_lag: int*
+    state num_iter: int = 0
+
+    @wcet("100 usec")
+    reaction(startup) {=
+      self->start_lag = (int*)calloc(NUM_ITER, sizeof(int));
+      self->completion_lag = (int*)calloc(NUM_ITER, sizeof(int));
+      self->execution_time = (int*)calloc(NUM_ITER, sizeof(int));
+    =}
     
     @wcet("161 usec")
     reaction(in) {=
@@ -82,16 +93,20 @@ reactor Motor(freq: float=1000.0, lfDeadline: time = 100 usec) {
       #ifndef NDEBUG
       lf_print("Got motor control input %i %i %i", in->value.x, in->value.y, in->value.z);
       #endif
-      // PRINT_LAG(Motor);
+      PRINT_LAG(Motor);
 
       motor_reaction(&in->value);
 
       EXEC_END();
-      EXEC_REPORT(Motor);
-    =} deadline(lfDeadline) {=
-        // lf_print_error_and_exit("deadline missd in Motor lag=" PRINTF_TIME, LAG());
-        lf_print_error_and_exit("deadline missd in Motor");
+    // =} deadline(lfDeadline) {=
+    //     // lf_print_error_and_exit("deadline missd in Motor lag=" PRINTF_TIME, LAG());
+    //     lf_print_error_and_exit("deadline missd in Motor");
+    // =}
     =}
+
+    reaction(shutdown) {=
+      EXEC_REPORT(Motor);
+      =}
 }
 
 reactor UserInput {
@@ -111,40 +126,81 @@ reactor SensorFusion {
     state _state: SensorFusionState
     state last_gyro: IntVec3
     state delta_t: int
+
+    state completion_lag: int*
+    state start_lag: int*
+    state execution_time: int*
+    state num_iter: int = 0
+
+    @wcet("100 usec")
+    reaction(startup) {=
+      self->_state.delta_t = (unsigned int )(0.001 * FIXED_POINT_SCALE);
+      #ifndef NDEBUG
+      lf_print("SensorFusion delta_t=%i", self->_state.delta_t);
+      #endif
+      self->completion_lag = (int*)calloc(NUM_ITER, sizeof(int));
+      self->start_lag = (int*)calloc(NUM_ITER, sizeof(int));
+      self->execution_time = (int*)calloc(NUM_ITER, sizeof(int));
+    =}
+
     @wcet("89 usec")
     reaction(gyro1, gyro2) -> angle, angular_speed {=
-        EXEC_BEGIN();
-        angle->value.x = (int) gyro1->value.y  / (int) lf_time_logical();
-        EXEC_END();
-        EXEC_REPORT(SensorFusion);
-        // sensor_fusion_reaction(&self->_state, lf_time_logical(), &gyro1->value, &gyro2->value, &angle->value, &angular_speed->value);
         PRINT_LAG(SensorFusion);
+        EXEC_BEGIN();
+        #ifndef NDEBUG
+        lf_print("Got gyro1=[%i %i %i] gyro2=[%i %i %i]", gyro1->value.x, gyro1->value.y, gyro1->value.z, gyro2->value.x, gyro2->value.y, gyro2->value.z);
+        #endif
+        sensor_fusion_reaction(&self->_state, &gyro1->value, &gyro2->value, &angle->value, &angular_speed->value);
         lf_set_present(angle);
-        // lf_set_present(angular_speed);
+        lf_set_present(angular_speed);
+        EXEC_END();
+    =}
+    reaction(shutdown){=
+      EXEC_REPORT(SensorFusion);
     =}
 }
 
 
-reactor Gyroscope(period: time =10ms, lfDeadline: time = 1 usec) {
-    timer t(10ms, period)
+reactor Gyroscope(period: time =1ms, lfDeadline: time = 1 usec) {
+    timer t(10msec, period)
     output out: IntVec3
+
+    state completion_lag: int*
+    state execution_time: int*
+    state start_lag: int*
+    state num_iter: int = 0
+
+    @wcet("100 usec")
+    reaction(startup) {=
+      self->start_lag = (int*)calloc(NUM_ITER, sizeof(int));
+      self->completion_lag = (int*)calloc(NUM_ITER, sizeof(int));
+      self->execution_time = (int*)calloc(NUM_ITER, sizeof(int));
+    =}
+
     @wcet("21 usec")
     reaction(t) -> out {=
+        PRINT_LAG(Gyro);
         EXEC_BEGIN();
         gyro_reaction(&out->value);
         EXEC_END();
-        EXEC_REPORT(Gyro);
         lf_set_present(out);
-    =} deadline(lfDeadline) {=
-      lf_print_error_and_exit("deadline missed in Gyro, lag=%d", LAG());
+    =}  
+    
+    // deadline(lfDeadline) {=
+    //   // lf_print_error_and_exit("deadline missed in Gyro, lag=%d", LAG());
+    // =}
+
+    reaction(shutdown) {=
+      EXEC_REPORT(Gyroscope);
+      lf_print("shutdown at %d",  (int) lf_time_logical_elapsed());
     =}
 }
 
 main reactor {
   controller = new Controller()
   userInput = new UserInput()
-  gyro1 = new Gyroscope(period=10ms, lfDeadline=30 usec)
-  gyro2 = new Gyroscope(period=10ms, lfDeadline=30 usec)
+  gyro1 = new Gyroscope(period=5ms, lfDeadline=30 msec)
+  gyro2 = new Gyroscope(period=5ms, lfDeadline=30 msec)
   motor = new Motor(lfDeadline=10ms)
   sensorFusion = new SensorFusion()
   gyro1.out, gyro2.out -> sensorFusion.gyro1, sensorFusion.gyro2
