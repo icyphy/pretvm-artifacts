@@ -1,0 +1,8 @@
+/**
+ * This example shows that, while the application logic is inherently
+ * unpredictable, we can predict the scheduling and timing of the system.
+ * The "predictability" of the system depends on the type of _prediction_.
+ */
+target C {
+    scheduler: STATIC,
+}

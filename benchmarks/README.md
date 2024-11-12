@@ -1,9 +1,30 @@
 # Running Timing Benchmarks Automatically
-Simply run
+Install python dependencies by running
+```
+pip install -r scripts/requirements.txt
+```
+
+This script also calls `sshpass`, which can be installed on macOS via
+```
+brew install sshpass
+```
+
+Then create a `credentials.py` in `scripts`
+```python
+IP_RPI4="<IP Address for the Raspberry Pi 4>"
+UN_RPI4="<Username for the Raspberry Pi 4>"
+PW_RPI4="<Password for the Raspberry Pi 4>"
+IP_ODROID="<IP Address for the ODROID-XU4>"
+UN_ODROID="<Username for the ODROID-XU4>"
+PW_ODROID="<Password for the ODROID-XU4>"
+```
+
+Then simply run
 ```
 python scripts/experiment_timing.py
 ```
-Detailed configurations can be found in the script.
+
+More configuration options can be found in the script.
 
 # Workflow for Updating Plots
 Sometimes we have collected the data and just want to regenerate the graphs. In

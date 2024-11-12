@@ -19,22 +19,26 @@ import credentials
 
 ################## CONFIGS ##################
 
-# Platform config
+# Platform config: RPI4, ODROID-XU4
 PLATFORM = "RPI4"
 
-# Static scheduler config
-# This is used mostly for naming files now.
-# The script runs both LOAD_BALANCED and EGS.
-STATIC_SCHEDULER = ["LOAD_BALANCED", "EGS"] # LOAD_BALANCED, EGS, MOCASIN
+# FIXME: This is completely useless!
+# This is ONLY used for naming files.
+# The script runs both LB and EGS regardless.
+STATIC_SCHEDULER_NAMES = ["LB", "EGS"]
 
 # Plot config
 ANNOTATE_MEAN_STD = False
 
-# Programs selected
-SELECT_PROGRAMS = []
+# If empty, the script runs the entire src directory.
+# Input just the LF program name without the .lf extension.
+# TIPS: Add a simple program here to test the script workflow.
+SELECT_PROGRAMS = [] # e.g., "ADASModel", "PingPong"
+
+# Exclude programs based on schedulers.
 EXCLUDED_PROGRAMS = {
     "NP": [],
-    "LOAD_BALANCED": [],
+    "LB": [],
     "EGS": []
 }
 
@@ -71,6 +75,7 @@ def post_process_timing_precision(csv):
     try:
         df = pd.read_csv(csv)
     except FileNotFoundError:
+        print("ERROR: file not found - " + str(csv))
         return None
     
     # Strip leading and trailing spaces from column names
@@ -303,7 +308,7 @@ def generate_plot_timing_precision(plots_dir, program, df):
                 # Annotate the plot with mean and std
                 plt.text(x_pos, y_pos, f'{scheduler}\nMean: {mean:.2f}\nSTD: {std:.2f}', ha='center', va='bottom')
 
-    plt.title("Timing Precision: DY vs. STATIC" + " (" + ", ".join(STATIC_SCHEDULER) + ")")
+    plt.title("Timing Precision: DY vs. STATIC" + " (" + ", ".join(STATIC_SCHEDULER_NAMES) + ")")
     plt.xlabel('Group (Reactor, Destination)')
     plt.ylabel('Time Difference')
     plt.xticks(rotation=45)
@@ -375,7 +380,7 @@ def generate_plot_timing_accuracy(plots_dir, program, df):
                 # Annotate the plot with mean and std
                 plt.text(x_pos, y_pos, f'{scheduler}\nMean: {mean:.2f}\nSTD: {std:.2f}', ha='center', va='bottom')
 
-    plt.title("Timing Accuracy: DY vs. STATIC" + " (" + ", ".join(STATIC_SCHEDULER) + ")")
+    plt.title("Timing Accuracy: DY vs. STATIC" + " (" + ", ".join(STATIC_SCHEDULER_NAMES) + ")")
     plt.xlabel('Group (Reactor, Destination)')
     plt.ylabel('Lag')
     plt.xticks(rotation=45)
@@ -402,7 +407,7 @@ def generate_plot_reaction_execution_time(plots_dir, program, df):
         y = ax.get_ylim()[1]  # Get the current upper limit of the y-axis to position the annotation
         plt.text(x, y, f'Mean: {mean:.2f}\nSTD: {std:.2f}\nMax: {max_time}', ha='center', va='bottom', rotation=70, fontsize=9)
         
-    plt.title("Execution Times: DY vs. STATIC" + " (" + ", ".join(STATIC_SCHEDULER) + ")")
+    plt.title("Execution Times: DY vs. STATIC" + " (" + ", ".join(STATIC_SCHEDULER_NAMES) + ")")
     plt.xlabel('Group (Reactor, Destination)')
     plt.ylabel('Execution Time')
     plt.xticks(rotation=45)
@@ -565,7 +570,7 @@ def main(args=None):
     # Time at which the script starts
     if args.experiment_dir is None:
         time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")  # Format: Year-Month-Day_Hour-Minute-Second
-        expr_run_dir = timing_dir / (time + "-" + PLATFORM + "-" + "_".join(STATIC_SCHEDULER) + "-" + ("_".join(SELECT_PROGRAMS) if len(SELECT_PROGRAMS) > 0 else "ALL"))
+        expr_run_dir = timing_dir / (time + "-" + PLATFORM + "-" + "_".join(STATIC_SCHEDULER_NAMES) + "-" + ("_".join(SELECT_PROGRAMS) if len(SELECT_PROGRAMS) > 0 else "ALL"))
         expr_run_dir.mkdir()
     else:
         expr_run_dir = timing_dir / args.experiment_dir
@@ -585,8 +590,8 @@ def main(args=None):
     if args.experiment_dir is None:
         # Prepare arguments for each run_benchmark call.
         args_1 = ["-hn=" + IP, "-un=" + UN, "-pwd=" + PW, "-f=--scheduler=NP", "-dd="+str(np_dir.resolve()), "--src=timing/src", "--src-gen=timing/src-gen"]
-        args_2 = ["-hn=" + IP, "-un=" + UN, "-pwd=" + PW, "-f=--scheduler=STATIC", "-f=--static-scheduler=LOAD_BALANCED", "-dd="+str(lb_dir.resolve()), "--src=timing/src", "--src-gen=timing/src-gen"]
-        args_3 = ["-hn=" + IP, "-un=" + UN, "-pwd=" + PW, "-f=--scheduler=STATIC", "-f=--static-scheduler=EGS", "-dd="+str(egs_dir.resolve()), "--src=timing/src", "--src-gen=timing/src-gen"]
+        args_2 = ["-hn=" + IP, "-un=" + UN, "-pwd=" + PW, "-f=--scheduler=STATIC", "-f=--mapper=LB", "-dd="+str(lb_dir.resolve()), "--src=timing/src", "--src-gen=timing/src-gen"]
+        args_3 = ["-hn=" + IP, "-un=" + UN, "-pwd=" + PW, "-f=--scheduler=STATIC", "-f=--mapper=EGS", "-dd="+str(egs_dir.resolve()), "--src=timing/src", "--src-gen=timing/src-gen"]
         if DASH_MODE:
             args_2.append("-f=--dash")
             args_3.append("-f=--dash")
@@ -602,7 +607,7 @@ def main(args=None):
         if len(EXCLUDED_PROGRAMS) > 0:
             for prog in EXCLUDED_PROGRAMS['NP']:
                 args_1.append("--exclude="+prog)
-            for prog in EXCLUDED_PROGRAMS['LOAD_BALANCED']:
+            for prog in EXCLUDED_PROGRAMS['LB']:
                 args_2.append("--exclude="+prog)
             for prog in EXCLUDED_PROGRAMS['EGS']:
                 args_3.append("--exclude="+prog)
