@@ -1,7 +1,7 @@
 target C {
   scheduler: {
     type: STATIC,
-    mapper: LB
+    mapper: EGS
   },
   build-type: Release,
   // platform: FlexPRET,
@@ -199,9 +199,9 @@ reactor Gyroscope(id: int = 0, period: time = 1 ms, lfDeadline: time = 1 usec) {
 main reactor {
   controller = new Controller()
   userInput = new UserInput()
-  gyro1 = new Gyroscope(period = 1 ms, lfDeadline = 19 usec)
+  gyro1 = new Gyroscope(period = 1 ms, lfDeadline = 20 usec)
   gyro2 = new Gyroscope(id=1, period = 1 ms, lfDeadline = 20 usec)
-  motor = new Motor(lfDeadline = 10 ms)
+  motor = new Motor(lfDeadline = 300 usec)
   sensorFusion = new SensorFusion()
   gyro1.out, gyro2.out -> sensorFusion.gyro1, sensorFusion.gyro2
   sensorFusion.angle -> controller.current_angle
