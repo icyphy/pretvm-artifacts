@@ -1,0 +1,83 @@
+target C {
+  scheduler: {
+    type: STATIC,
+    static-scheduler: LB
+  },
+  workers: 8,
+  timeout: 10 nsec,
+  cmake-include: ["pigpio.txt"]
+}
+
+preamble {=
+  #include <pigpio.h>
+
+  // Logic analyser channels <=> RPi GPIO pins
+  #define LOGIC_ANALYZER_CHANNEL_r1_8 26
+  #define LOGIC_ANALYZER_CHANNEL_r2_6 19
+  #define LOGIC_ANALYZER_CHANNEL_r3_4 13
+  #define LOGIC_ANALYZER_CHANNEL_r10_2 6
+  #define LOGIC_ANALYZER_CHANNEL_r20_1 5
+  #define LOGIC_ANALYZER_CHANNEL_r30_3 0
+=}
+
+reactor _Factorial {
+  output out: int
+  timer t(0, 1 nsec)
+  logical action prepForNext
+
+  state N: int = 0
+  state result: int
+  state lastResult: int
+
+  reaction(t) -> out, prepForNext {=
+    if (self->N < 2) {
+        self->result = 1;
+    } else {
+        self->result = self->N * self->lastResult;
+    }
+    lf_set(out, self->result);
+    lf_schedule(prepForNext, 0);
+  =}
+
+  reaction(prepForNext) {=
+    self->N += 1;
+    self->lastResult = self->result;
+  =}
+}
+
+reactor Printer {
+  input in: int
+  state result: int
+
+  reaction(in) {=
+    self->result = in->value;
+    printf("%d\n", self->result);
+  =}
+}
+
+// @property(name="correctness", tactic="bmc", spec="G[10 nsec](Factorial_printer_reaction_0 ==> Factorial_printer_result == 3628800)", expect=true)
+main reactor {
+  factorial = new _Factorial()
+  printer = new Printer()
+  factorial.out -> printer.in
+
+  reaction(startup) {=
+    // Initialize PIGPIO library
+    if (gpioInitialise() < 0) {
+      lf_print(stderr, "Failed to initialize GPIO.");
+      return 1;
+    }
+    // Set pins modes
+    gpioSetMode(LOGIC_ANALYZER_CHANNEL_r1_8, PI_OUTPUT);
+    gpioSetMode(LOGIC_ANALYZER_CHANNEL_r2_6, PI_OUTPUT);
+    gpioSetMode(LOGIC_ANALYZER_CHANNEL_r3_4, PI_OUTPUT);
+    gpioSetMode(LOGIC_ANALYZER_CHANNEL_r10_2, PI_OUTPUT);
+    gpioSetMode(LOGIC_ANALYZER_CHANNEL_r20_1, PI_OUTPUT);
+    gpioSetMode(LOGIC_ANALYZER_CHANNEL_r30_3, PI_OUTPUT);
+  =}
+
+  reaction(shutdown) {=
+    gpioTerminate(); // Clean up GPIO
+    lf_print("Done.");
+  =}
+}

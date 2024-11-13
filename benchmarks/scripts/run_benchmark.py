@@ -120,6 +120,9 @@ parser.add_argument(
     "--post-only", action="store_true", help="Only perform post analyses, skip all steps involving the remote platform."
 )
 parser.add_argument(
+    "--repeat", type=int, default=0, help="The number of times the LF program should repeat (for performance benchmarking)"
+)
+parser.add_argument(
     "-nl", "--no-lfc", action="store_true", help="Skip re-compiling the LF code if src-gen already exists."
 )
 parser.add_argument(
@@ -193,7 +196,10 @@ def host_create_dir(dir):
 
 def host_execute_cmd(cmd, shell=False):
     print("Executing command: " + str(cmd))
-    return subprocess.run(cmd, shell=shell, capture_output=True, text=True, encoding='ISO-8859-1')
+    # Enable the lf conda environment and inherit the current environment.
+    env = os.environ.copy()
+    # subprocess.run('bash -c "conda deactivate base; conda activate lf; python -V"', shell=shell, env=env)
+    return subprocess.run(cmd, shell=shell, capture_output=True, text=True, encoding='ISO-8859-1', env=env)
 
 
 # Note: func must accept full_entry_path as the first argument and has at most
@@ -305,7 +311,7 @@ def remote_rm_dir(dir):
     remote_print(stderr, is_err=True)
 
 
-def remote_run_program(dir, data_dir, arg2, arg3):
+def remote_run_program(dir, data_dir, command_line_args, arg3=None):
     """
     Extract the binary name
     Assuming the binary name is the last part of the dir path.
@@ -315,7 +321,14 @@ def remote_run_program(dir, data_dir, arg2, arg3):
     there too. This directory is likely stored in the remote_data variable.
     """
     bin = os.path.basename(os.path.normpath(dir))
-    cmd = f"cd {data_dir} && {dir}build/{bin}"
+    cmd = f"cd {data_dir}"
+    if (command_line_args.repeat == 0):
+        cmd += f" && {dir}build/{bin}"
+    else:
+        # Repeat the execution and write outputs in a txt file.
+        cmd += f" && for i in {{1..{command_line_args.repeat}}}; do {dir}build/{bin}; done > {bin}.txt"
+    if not command_line_args.no_tracing:
+        cmd += f" && mv main_0.lft {bin}.lft" # Rename the .lft file to that we know which is which.
     _, stdout, stderr = remote_execute_cmd(cmd)
     remote_print(stdout)
     remote_print(stderr, is_err=True)
@@ -407,7 +420,7 @@ def main(args=None):
             # Step 4.5: run programs and collect trace files in a remote data directory.
             remote_rm_dir(remote_data)
             remote_create_dir(remote_data)
-            remote_forall_subdirs_do(remote_run_program, remost_dest, remote_data)
+            remote_forall_subdirs_do(func=remote_run_program, dir=remost_dest, arg1=remote_data, arg2=args)
             
             # Step 4.6: run tracing remotely
             if not args.no_tracing:
@@ -417,6 +430,15 @@ def main(args=None):
                 # Step 4.7
                 host_create_dir(host_data)
 
+                if args.data_dir is None:
+                    data_entry_dir = host_data / time
+                else:
+                    data_entry_dir = args.data_dir
+                host_scp_dir(remote_data, data_entry_dir, args, from_host_to_remote=False)
+            
+            # If this is true, we are doing performance benchmarking.
+            # Copy the txt file back to host.
+            elif args.repeat > 0:
                 if args.data_dir is None:
                     data_entry_dir = host_data / time
                 else:

@@ -1,0 +1,94 @@
+target C {
+  scheduler: {
+    type: STATIC,
+    static-scheduler: LB
+  },
+  workers: 8,
+  timeout: 10 nsec,
+  cmake-include: ["pigpio.txt"]
+}
+
+preamble {=
+  #include <pigpio.h>
+
+  // Logic analyser channels <=> RPi GPIO pins
+  #define LOGIC_ANALYZER_CHANNEL_r1_8 26
+  #define LOGIC_ANALYZER_CHANNEL_r2_6 19
+  #define LOGIC_ANALYZER_CHANNEL_r3_4 13
+  #define LOGIC_ANALYZER_CHANNEL_r10_2 6
+  #define LOGIC_ANALYZER_CHANNEL_r20_1 5
+  #define LOGIC_ANALYZER_CHANNEL_r30_3 0
+=}
+
+reactor Fib {
+  output out: int
+  timer t(0, 1 nsec)
+  logical action incrementN
+  logical action saveLast
+  logical action saveSecondLast
+  state N: int = 0
+  state result: int = 0
+  state lastResult: int = 0
+  state secondLastResult: int = 0
+
+  reaction(t) -> out, incrementN, saveLast, saveSecondLast {=
+    if (self->N < 2) {
+        self->result = 1;
+    } else {
+        self->result = self->lastResult + self->secondLastResult;
+    }
+    lf_set(out, self->result);
+    lf_schedule(incrementN, 0);
+    lf_schedule(saveLast, 0);
+    lf_schedule(saveSecondLast, 0);
+  =}
+
+  reaction(incrementN) {=
+    self->N += 1;
+  =}
+
+  reaction(saveSecondLast) {=
+    self->secondLastResult = self->lastResult;
+  =}
+
+  reaction(saveLast) {=
+    self->lastResult = self->result;
+  =}
+}
+
+reactor Printer {
+  input in: int
+  state result: int
+
+  reaction(in) {=
+    self->result = in->value;
+    printf("%d\n", self->result);
+  =}
+}
+
+// @property(name="correctness", tactic="bmc", spec="G[10 nsec](Fibonacci_printer_reaction_0 ==> Fibonacci_printer_result == 89)", expect=true)
+main reactor {
+  fib = new Fib()
+  printer = new Printer()
+  fib.out -> printer.in
+
+  reaction(startup) {=
+    // Initialize PIGPIO library
+    if (gpioInitialise() < 0) {
+      lf_print(stderr, "Failed to initialize GPIO.");
+      return 1;
+    }
+    // Set pins modes
+    gpioSetMode(LOGIC_ANALYZER_CHANNEL_r1_8, PI_OUTPUT);
+    gpioSetMode(LOGIC_ANALYZER_CHANNEL_r2_6, PI_OUTPUT);
+    gpioSetMode(LOGIC_ANALYZER_CHANNEL_r3_4, PI_OUTPUT);
+    gpioSetMode(LOGIC_ANALYZER_CHANNEL_r10_2, PI_OUTPUT);
+    gpioSetMode(LOGIC_ANALYZER_CHANNEL_r20_1, PI_OUTPUT);
+    gpioSetMode(LOGIC_ANALYZER_CHANNEL_r30_3, PI_OUTPUT);
+  =}
+
+  reaction(shutdown) {=
+    gpioTerminate(); // Clean up GPIO
+    lf_print("Done.");
+  =}
+}

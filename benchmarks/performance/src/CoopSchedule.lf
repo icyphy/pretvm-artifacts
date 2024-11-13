@@ -1,0 +1,55 @@
+target C {
+  timeout: 5 sec, // FIXME: Make this bigger
+  workers: 2,
+  build-type: Debug,
+  fast: true,
+}
+
+realtime reactor Trigger {
+  output out: int
+  output out2: int
+  output out3: int
+  output out4: int
+  output out5: int
+  timer t(0 msec, 10 msec)
+
+  // @wcet("111832 nsec") # RPI4
+  @wcet("2074 nsec") # Trick the scheduler to have a 3-2 split.
+  reaction(t) -> out, out2, out3, out4, out5 {=
+    int x = 1;
+    lf_set(out, x);
+    lf_set(out2, x);
+    lf_set(out3, x);
+    lf_set(out4, x);
+    lf_set(out5, x);
+  =}
+}
+
+realtime reactor Task {
+  input cnt: int
+  state counter: int = 0
+
+  @wcet("2074 nsec") # RPI4
+  reaction(cnt) {=
+    self->counter += 2; // Should be 1.
+  =}
+
+  @wcet("10954 nsec") # RPI4
+  reaction(shutdown) {=
+    lf_print("Received: %d", self->counter);
+  =}
+}
+
+main reactor {
+  trigger = new Trigger()
+  task1 = new Task()
+  task2 = new Task()
+  task3 = new Task()
+  task4 = new Task()
+  task5 = new Task()
+  trigger.out -> task1.cnt  //after 600 usec
+  trigger.out2 -> task2.cnt //after 600 usec
+  trigger.out3 -> task3.cnt //after 600 usec
+  trigger.out4 -> task4.cnt //after 600 usec
+  trigger.out5 -> task5.cnt //after 600 usec
+}
