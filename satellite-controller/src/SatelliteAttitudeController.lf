@@ -4,7 +4,7 @@ target C {
     mapper: EGS
   },
   build-type: Release,
-  // platform: FlexPRET,
+  platform: FlexPRET,
   cmake-include: "SatelliteAttitudeController.cmake",  // logging: Debug,
   workers: 2,
   timeout: 110001 usec
@@ -15,7 +15,7 @@ preamble {=
     #include "satellite_attitude_controller.h"
 
     #define NUM_ITER 100
-    //#define MEASURE_EXECUTION_TIMES
+    #define MEASURE_EXECUTION_TIMES
   // #define PRINT_LAGS
 
     #include "instrumentation.h"
@@ -26,6 +26,10 @@ reactor Controller(Kp_float: float = 0.3, Ki_float: float = 0.1, Kd_float: float
   input current_angular_speed: IntVec3
   input desired_angle: IntVec3
   output control_signal: IntVec3
+
+  input dummyIn: bool
+  output dummyOut: bool
+
   state _state: ControllerState
   state completion_lag: int*
   state execution_time: int*
@@ -66,13 +70,14 @@ reactor Controller(Kp_float: float = 0.3, Ki_float: float = 0.1, Kd_float: float
   =}
 
   @wcet("1 msec")
-  reaction(shutdown) -> control_signal {=
+  reaction(shutdown, dummyIn) -> dummyOut {=
     EXEC_REPORT(Controller);
   =}
 }
 
 reactor Motor(lfDeadline: time = 100 usec) {
   input in: IntVec3
+  input dummyIn: bool
 
   state completion_lag: int*
   state execution_time: int*
@@ -98,12 +103,11 @@ reactor Motor(lfDeadline: time = 100 usec) {
 
       EXEC_END();
     =} deadline(lfDeadline) {=
-        // lf_print_error_and_exit("deadline missd in Motor lag=" PRINTF_TIME, LAG());
-        lf_print_error_and_exit("deadline missd in Motor");
+        lf_print_error_and_exit("deadline missd in Motor lag=" PRINTF_TIME, LAG());
     =}
 
   @wcet("1 msec")
-  reaction(shutdown) {=
+  reaction(shutdown, dummyIn) {=
     EXEC_REPORT(Motor);
   =}
 }
@@ -123,6 +127,11 @@ reactor SensorFusion {
   input gyro2: IntVec3
   output angle: IntVec3
   output angular_speed: IntVec3
+
+  input dummyIn1: bool
+  input dummyIn2: bool
+  output dummyOut: bool
+
   state _state: SensorFusionState
   state last_gyro: IntVec3
   state delta_t: int
@@ -157,7 +166,7 @@ reactor SensorFusion {
   =}
 
   @wcet("1 msec")
-  reaction(shutdown) -> angle {=
+  reaction(shutdown, dummyIn1, dummyIn2) -> dummyOut {=
     EXEC_REPORT(SensorFusion);
   =}
 }
@@ -165,6 +174,7 @@ reactor SensorFusion {
 reactor Gyroscope(id: int = 0, period: time = 1 ms, lfDeadline: time = 1 usec) {
   timer t(10 msec, period)
   output out: IntVec3
+  output dummyOut: bool
 
   state completion_lag: int*
   state execution_time: int*
@@ -186,11 +196,11 @@ reactor Gyroscope(id: int = 0, period: time = 1 ms, lfDeadline: time = 1 usec) {
     EXEC_END();
     lf_set_present(out);
   =} deadline(lfDeadline) {=
-    // lf_print_error_and_exit("deadline missed in Gyro, lag=%d", LAG());
+    lf_print_error_and_exit("deadline missed in Gyro, lag=%d", LAG());
   =}
 
   @wcet("1 msec")
-  reaction(shutdown) -> out {=
+  reaction(shutdown) -> dummyOut {=
     lf_sleep(MSEC(self->id * 10));
     EXEC_REPORT(Gyroscope);
   =}
@@ -204,9 +214,11 @@ main reactor {
   motor = new Motor(lfDeadline = 300 usec)
   sensorFusion = new SensorFusion()
   gyro1.out, gyro2.out -> sensorFusion.gyro1, sensorFusion.gyro2
+  gyro1.dummyOut, gyro2.dummyOut -> sensorFusion.dummyIn1, sensorFusion.dummyIn2
   sensorFusion.angle -> controller.current_angle
   sensorFusion.angular_speed -> controller.current_angular_speed
-
+  sensorFusion.dummyOut -> controller.dummyIn
   userInput.desired_angle -> controller.desired_angle
   controller.control_signal -> motor.in
+  controller.dummyOut -> motor.dummyIn
 }
