@@ -1,6 +1,7 @@
 import sys
 import matplotlib
 import matplotlib.pyplot as plt
+import statistics
 
 matplotlib.rcParams.update({
     'font.size': 12,          # Default text size
@@ -35,19 +36,19 @@ with open(file, 'r') as file:
             if currentModule is not None:
                 results[currentModule] = currentModuleResults
             currentModule = newModule
-            currentModuleResults = {"exec_time": list(), "completion": list()}
+            currentModuleResults = {"exec_time": list(), "start_time": list()}
         if "Iteration" in line:
-            # start_lag = int(line.split(" ")[2].split("=")[1])
+            start_lag = int(line.split(" ")[2].split("=")[1])
             exec_time = int(line.split(" ")[3].split("=")[1])
             completion = int(line.split(" ")[4].split("=")[1])
-            # currentModuleResults["start_lag"].append(int(start_lag/1000))
+            currentModuleResults["start_time"].append(int(start_lag/1000))
             currentModuleResults["exec_time"].append(int(exec_time/1000))
-            currentModuleResults["completion"].append(int(completion/1000))
+            # currentModuleResults["completion"].append(int(completion/1000))
     results[currentModule] = currentModuleResults
             
 
 results["Gyroscope"]["wcet"] = 21
-results["Gyroscope"]["deadline"] = 41
+results["Gyroscope"]["deadline"] = 20
 
 results["SensorFusion"]["wcet"] = 62
 results["SensorFusion"]["deadline"] = -1
@@ -61,7 +62,7 @@ results["Motor"]["deadline"] = 300
 all_values = []
 for data in results.values():
     all_values.extend(data["exec_time"])
-    all_values.extend(data["completion"])
+    all_values.extend(data["start_time"])
     all_values.append(data["wcet"])
     all_values.append(data["deadline"])
 
@@ -77,6 +78,23 @@ fig, axs = plt.subplots(4, 2, figsize=figsize)
 # Plot histograms for each module
 for i, (module, data) in enumerate(results.items()):
     ax = axs[i][0]
+    start_mean = statistics.mean(data["start_time"])
+    start_std = statistics.stdev(data["start_time"])
+    print(f"{module} start_time_mean={start_mean} start_time_std={start_std}")
+    ax.hist(data["start_time"], bins=bins, alpha=alpha, align='left')
+    deadline = data["deadline"]
+    if deadline > 0:
+        ax.axvline(deadline, color='r', linestyle='solid', linewidth=1, label='Deadline')
+        ax.legend(loc='upper right')
+    if i == 0:
+        ax.set_title('Release time')
+    if i == 3:
+        ax.set_xlabel(u'Time (\u03bcs)')
+
+    ax = axs[i][1]
+    exec_time_mean = statistics.mean(data["exec_time"])
+    exec_time_std = statistics.stdev(data["exec_time"])
+    print(f"{module} exec_time_mean={exec_time_mean} exec_time_std={exec_time_std}")
     ax.hist(data["exec_time"], bins=bins, alpha=alpha, align='left')
     wcet = data["wcet"]
     if wcet > 0:
@@ -85,24 +103,8 @@ for i, (module, data) in enumerate(results.items()):
     if i == 0:
         ax.set_title('Execution time')
     if i == 3:
-        ax.set_xlabel('Time [usec]')
+        ax.set_xlabel(u'Time (\u03bcs)')
     ax.set_ylabel(module, rotation=90)
-
-    ax = axs[i][1]
-    ax.hist(data["completion"], bins=bins, alpha=alpha, align='left')
-    deadline = data["deadline"]
-    if deadline > 0:
-        ax.axvline(deadline, color='r', linestyle='solid', linewidth=1, label='Deadline')
-        ax.legend(loc='upper right')
-    if i == 0:
-        ax.set_title('Completion time')
-    if i == 3:
-        ax.set_xlabel('Time [usec]')
-
-    # ax.set_xlabel('Time [usec]')
-    # ax.set_ylabel('Frequency')
-    # ax.text(0.5, -0.1, f'Subtitle: {module}', ha='center', va='center', transform=ax.transAxes)
-    # ax.text(0.5, -0.2, 'Caption: Histogram of start lag, exec time, and completion', ha='center', va='center', transform=ax.transAxes)
 
 
 plt.tight_layout()
