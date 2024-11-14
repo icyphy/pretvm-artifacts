@@ -7,14 +7,14 @@ target C {
   platform: FlexPRET,
   cmake-include: "SatelliteAttitudeController.cmake",  // logging: Debug,
   workers: 2,
-  timeout: 110001 usec
+  timeout: 1100001 usec
 }
 
 preamble {=
     #include <string.h>
     #include "satellite_attitude_controller.h"
 
-    #define NUM_ITER 100
+    #define NUM_ITER 1000
     #define MEASURE_EXECUTION_TIMES
   // #define PRINT_LAGS
 
@@ -70,8 +70,9 @@ reactor Controller(Kp_float: float = 0.3, Ki_float: float = 0.1, Kd_float: float
   =}
 
   @wcet("1 msec")
-  reaction(shutdown, dummyIn) -> dummyOut {=
+  reaction(dummyIn) -> dummyOut {=
     EXEC_REPORT(Controller);
+    lf_set(dummyOut, true);
   =}
 }
 
@@ -107,7 +108,7 @@ reactor Motor(lfDeadline: time = 100 usec) {
     =}
 
   @wcet("1 msec")
-  reaction(shutdown, dummyIn) {=
+  reaction(dummyIn) {=
     EXEC_REPORT(Motor);
   =}
 }
@@ -166,8 +167,9 @@ reactor SensorFusion {
   =}
 
   @wcet("1 msec")
-  reaction(shutdown, dummyIn1, dummyIn2) -> dummyOut {=
+    reaction(dummyIn1, dummyIn2) -> dummyOut {=
     EXEC_REPORT(SensorFusion);
+    lf_set(dummyOut, true); 
   =}
 }
 
@@ -201,8 +203,9 @@ reactor Gyroscope(id: int = 0, period: time = 1 ms, lfDeadline: time = 1 usec) {
 
   @wcet("1 msec")
   reaction(shutdown) -> dummyOut {=
-    lf_sleep(MSEC(self->id * 10));
+    lf_sleep(MSEC(self->id * 100));
     EXEC_REPORT(Gyroscope);
+    lf_set(dummyOut, true); 
   =}
 }
 

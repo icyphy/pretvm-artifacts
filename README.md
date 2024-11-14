@@ -1,5 +1,9 @@
 # Artifacts for the PRET Virtual Machine paper
 
+## TODOs
+- [ ] Bring EGS as a submodule here and document how to set it up using a virtual environment etc,
+- [ ] Create a FlexPRET config for the RTAS submission so others easily can build it  
+
 ## Getting started
 
 ### Requirements
