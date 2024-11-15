@@ -93,13 +93,13 @@ def extract_times_from_file(file_path):
 
 def calculate_statistics(times):
     if len(times) == 0:
-        return None, None, None
+        return None
     mean = np.mean(times)
     max_val = np.max(times)
     std_dev = np.std(times, ddof=1)  # Use ddof=1 for sample standard deviation
     return {"mean": mean, "max": max_val, "std": std_dev}
 
-def generate_latex_table(program_names, program_stats, file_path):
+def generate_latex_table(program_names, program_stats, references, file_path):
     code = f"% Generated table at {file_path}\n"
     code += r"""
     \begin{table*}[ht]
@@ -138,14 +138,18 @@ def generate_latex_table(program_names, program_stats, file_path):
             egs_mean = "-"
             egs_max  = "-"
             egs_std  = "-"
-        code += f"\n\\texttt{{{program}}}  & {program_stats['LOC'][program]}  & {np_mean} & {lb_mean} & {egs_mean} & {np_max} & {lb_max} & {egs_max} & {np_std} & {lb_std} & {egs_std} \\\\"
+        code += f"\n\\texttt{{{program}}}"
+        if references[program] is not None:
+            code += f"~\cite{{{references[program]}}}"
+        code += f"  & {program_stats['LOC'][program]}  & {np_mean} & {lb_mean} & {egs_mean} & {np_max} & {lb_max} & {egs_max} & {np_std} & {lb_std} & {egs_std} \\\\"
     code += r"""
         \bottomrule
         \end{tabular} 
-        \caption{Average, maximum, and standard deviation of the lags in microseconds of the
+        \caption{Average, maximum, and standard deviation of the
+        benchmark execution times using the
         dynamic scheduler (DY), the static \textsc{Load
         Balanced} scheduler (LB), and the static \textsc{Edge Generation}
-        scheduler (EG).} 
+        scheduler (EGS).} 
         \label{tab:accuracy_results}
     \end{table*}
     """
@@ -275,6 +279,17 @@ def main(args=None):
         },
     }
 
+    references = {
+        'ADASModel': 'lin2023lfverifier',
+        'CoopSchedule': 'Jellum:23:RTOS',
+        'Counting': 'menard2023performance',
+        'LongShort': None,
+        'Philosophers': 'menard2023performance',
+        'PingPong': 'menard2023performance',
+        'ThreadRing': 'menard2023performance',
+        'Throughput': 'menard2023performance',
+    }
+
     # Generate timing variation plots for each program.
     for program in program_names:
         
@@ -290,15 +305,19 @@ def main(args=None):
         stats_lb = calculate_statistics(times_lb)
         stats_egs = calculate_statistics(times_egs)
 
-        stats_dy['data'] = times_dy
-        stats_lb['data'] = times_lb
-        stats_egs['data'] = times_egs
+        if stats_dy is None: raise Exception(f"When running {program}, stats_dy is None.")
+        if stats_lb is None: raise Exception(f"When running {program}, stats_lb is None.")
+        if stats_egs is None: raise Exception(f"When running {program}, stats_egs is None.")
+
+        stats_dy["data"] = times_dy
+        stats_lb["data"] = times_lb
+        stats_egs["data"] = times_egs
 
         program_stats['DY'][program] = stats_dy
         program_stats['LB'][program] = stats_lb
         program_stats['EGS'][program] = stats_egs
 
-    generate_latex_table(program_names, program_stats, expr_run_dir / "table.tex")
+    generate_latex_table(program_names, program_stats, references, expr_run_dir / "table.tex")
 
     with open(expr_run_dir / "data.txt", "w") as file:
         pprint.pprint(program_stats, stream=file)
