@@ -18,10 +18,6 @@
  * worker. In a quick test, the version with logical actions in each worker was
  * 50% slower compared to the version with only one logical action in the
  * dictionary.
- *
- * @author Christian Menard
- * @author Hannes Klein
- * @author Matt Chorlian
  */
 
 target CCpp {

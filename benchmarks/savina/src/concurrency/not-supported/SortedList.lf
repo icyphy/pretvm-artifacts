@@ -9,9 +9,6 @@
  * if they've hit their target requests amount they will
  * send a `finish` message; otherwise, they will continue
  * to query the LinkList.
- *
- * @author Thee Ho
- * @author Matt Chorlian
  */
 
 target CCpp {

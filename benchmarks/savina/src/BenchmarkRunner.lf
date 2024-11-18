@@ -28,11 +28,6 @@ target C;
  *     =}
  *
  * @param num_iterations How many times to execute the kernel of the benchmark to measure.
- *
- * @author Hannes Klein
- * @author Shaokai Lin
- * @author Matt Chorlian
- * @author Arthur Deng
  */
 
 preamble {=

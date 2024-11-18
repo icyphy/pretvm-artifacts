@@ -30,11 +30,6 @@
  * two chameneos will meet. In other words, this LF benchmark only
  * implements one specific behaviour of the many possible behaviours
  * in actors.
- *
- * @author Hannes Klein
- * @author Felix Wittwer
- * @author Marten Lohstroh
- * @author Tassilo Tanneberger
  */
 
 

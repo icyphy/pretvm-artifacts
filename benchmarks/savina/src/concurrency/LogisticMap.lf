@@ -3,9 +3,6 @@
  *
  * For more details on this benchmark, see the Cpp version from which it was derived:
  * https://github.com/lf-lang/benchmarks-lingua-franca/blob/main/Cpp/Savina/src/concurrency/LogisticMap.lf.
- *
- * @author Christian Menard
- * @author Hannes Klein
  */
 
 target C {

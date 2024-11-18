@@ -53,10 +53,6 @@
  * them start smoking all at once in parallel. This could be achieved with
  * logical actions in each smoker by scheduling each action at a specific known
  * tag.
- *
- * @author Christian Menard
- * @author Hannes Klein
- * @author Matt Chorlian
  */
 
 target C {

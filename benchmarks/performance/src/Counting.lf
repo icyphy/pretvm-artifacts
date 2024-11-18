@@ -11,10 +11,6 @@
  *
  *
  * For comparison some informal results for 1,000,000 messages
- *
- * @author Hannes Klein
- * @Abanob Bostouros
- * @author Tassilo Tanneberger
  */
 
  /* [[[cog

@@ -11,10 +11,6 @@
  * the same column or in the same row. The data from the neighbors is then used
  * to compute the next intermediate result and to update the local state
  * accordingly.
- *
- * @author Christian Menard
- * @author Hannes Klein
- * @author Soroush Bateni
  */
 
 target C {
