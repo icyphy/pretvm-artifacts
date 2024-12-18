@@ -93,19 +93,25 @@ void gyro_reaction(IntVec3 *sample_ret) {
   }
 }
 
+/** Compute angle by integrating angular velocity. */
+void compute_angle(SensorFusionState *state,
+                   IntVec3 *gyro, IntVec3 *angle) {
+  angle->x = state->last_angle.x +
+             (multiply(gyro->x, state->delta_t) >> FIXED_POINT_FRACTION_BITS);
+  angle->y = state->last_angle.y +
+             (multiply(gyro->y, state->delta_t) >> FIXED_POINT_FRACTION_BITS);
+  angle->z = state->last_angle.z +
+             (multiply(gyro->z, state->delta_t) >> FIXED_POINT_FRACTION_BITS);
+}
+
 void sensor_fusion_reaction(SensorFusionState *state,
                             IntVec3 *gyro1,
                             IntVec3 *gyro2, IntVec3 *angle,
                             IntVec3 *angular_speed) {
   IntVec3 gyro_avg = {(gyro1->x + gyro2->x) >> 1, (gyro1->y + gyro2->y) >> 1,
                       (gyro1->z + gyro2->z) >> 1};
-
-  angle->x = state->last_angle.x +
-             (multiply(gyro_avg.x, state->delta_t) >> FIXED_POINT_FRACTION_BITS);
-  angle->y = state->last_angle.y +
-             (multiply(gyro_avg.y, state->delta_t) >> FIXED_POINT_FRACTION_BITS);
-  angle->z = state->last_angle.z +
-             (multiply(gyro_avg.z, state->delta_t) >> FIXED_POINT_FRACTION_BITS);
+  
+  compute_angle(state, &gyro_avg, angle);
 
   angular_speed->x = gyro_avg.x;
   angular_speed->y = gyro_avg.y;

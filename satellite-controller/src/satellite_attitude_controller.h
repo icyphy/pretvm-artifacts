@@ -20,6 +20,8 @@ typedef struct {
   unsigned int delta_t;
 } SensorFusionState;
 
+void compute_angle(SensorFusionState *state, IntVec3 *gyro, IntVec3 *angle);
+
 void sensor_fusion_startup_reaction(SensorFusionState *state, int64_t delta_t);
 
 void sensor_fusion_reaction(SensorFusionState *state,
