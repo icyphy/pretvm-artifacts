@@ -46,7 +46,7 @@ reactor FlightComputer(width:int=3) {
     controller.dummyOut -> dummyOut
 }
 
-reactor SensorVoter(width:int = 1) {
+reactor SensorVoter(width:int = 3) {
     input[width] angle: IntVec3
     input[width] angular_speed: IntVec3
     input[width] dummyIn: bool
