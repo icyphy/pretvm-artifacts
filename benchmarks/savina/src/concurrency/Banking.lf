@@ -36,12 +36,6 @@
  * thus be much faster. However, this is likely an unfair advantage over the Akka
  * implementation, which also sends all messages individually.
  *
- * @author Hannes Klein
- * @author Christian Menard
- * @author: Matt Chorlian
- * @author: Arthur Deng
- * @author: Tassilo Tanneberger
- *
  * Major changes from original Cpp implementation:
  *     - implemented deque for c
  *     - parameter passing for reactor Account: cannot pass in initialBalance = DBL_MAX / (numAccounts * numTransactions)

@@ -6,9 +6,6 @@
  *
  * To open the causality loop in the ring of reactors one
  * reactor uses a logical action for message passing.
- *
- * @author Matthew Chorlian
- * @author Tassilo Tanneberger
  */
 
 /* [[[cog

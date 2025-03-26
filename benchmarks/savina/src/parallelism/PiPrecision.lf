@@ -7,10 +7,6 @@
  * This version is adapted from Hannes Klein's original implementation
  * to work with the C target and does not use the BenchmarkRunner.
  * See github.com/hnnskl/lingua-franca/blob/dev-savina-cpp/benchmark/Cpp/Savina/.
- *
- * @author Hannes Klein
- * @author Soroush Bateni
- * @author Shaokai Lin
  */
 
 target C {

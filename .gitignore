@@ -8,3 +8,4 @@
 **/*.bc
 
 benchmarks/experiment-data
+benchmarks/scripts/credentials.py

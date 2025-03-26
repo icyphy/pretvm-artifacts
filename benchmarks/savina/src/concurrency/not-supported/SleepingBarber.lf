@@ -34,11 +34,6 @@
  * barber and the factory operate in parallel. Since the complexity of
  * computations involved in this benchmark is low, this isn't a problem for
  * performance though.
- *
- * @author Christian Menard
- * @author Hannes Klein
- * @author Matthew Chorlian
- * @author Edward A. Lee
  */
 
 target C {

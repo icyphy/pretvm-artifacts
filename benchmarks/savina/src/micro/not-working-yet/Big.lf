@@ -16,12 +16,6 @@
  * send a total of 120 pings and 120 pongs per iteration, but we need to check
  * up to 14400 ping ports and 14400 pong ports in each iteration. Obviously this
  * introduces a large overhead.
- *
- * @author Hannes Klein
- * @author Felix Wittwer
- * @author Christian Menard
- * @author Arthur Deng
- * @author Tassilo Tanneberger
  */
 
 target C{

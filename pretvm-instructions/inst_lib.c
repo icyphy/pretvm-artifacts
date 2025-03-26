@@ -1,8 +1,6 @@
 
 /**
  * A static scheduler for the threaded runtime of the C target of Lingua Franca.
- *
- * @author{Shaokai Lin <shaokai@berkeley.edu>}
  */
 
 #define REACTOR_LOCAL_TIME
@@ -299,9 +297,6 @@ void execute_inst_STP(size_t worker_number, operand_t op1, operand_t op2,
 }
 /**
  * @file
- * @author Edward A. Lee
- * @author Soroush Bateni
- * @author Hou Seng (Steven) Wong
  * @copyright (c) 2020-2023, The University of California at Berkeley
  * License in [BSD
  * 2-clause](https://github.com/lf-lang/reactor-c/blob/main/LICENSE.md)

@@ -7,10 +7,6 @@
  * This is not possible with reactors because scheduling and
  * advancing logical time occurs after each round of
  * message delivery.
- *
- * @author Hannes Klein (c++ version)
- * @author Matthew Chorlian (adapted C++ version to C)
- * @author Tassilo Tanneberger
  */
 
 

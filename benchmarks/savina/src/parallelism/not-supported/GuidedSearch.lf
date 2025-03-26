@@ -52,10 +52,6 @@
  * multi-threaded executions have the tendency to perform much more work as
  * compared to single threaded execution. This is likely due to the race-conditions
  * mentioned before.
- *
- * @author Christian Menard
- * @author Hannes Klein
- * @author Soroush Bateni
  */
 
 target CCpp {

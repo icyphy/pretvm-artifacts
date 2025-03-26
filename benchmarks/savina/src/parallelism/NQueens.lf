@@ -31,10 +31,6 @@
  * solution could use a logical action and call lf_set multiple times to defer
  * sending a message. It could be worthwhile to try this out, but it would also
  * complicate the design.
- *
- * @author Christian Menard
- * @author Hannes Klein
- * @author Arthur Deng
  */
 
 target C {

@@ -44,10 +44,6 @@ Procedure description:
 Dependencies:
 - sshpass (for allowing passing in password on the commandline)
   Only use this script for non-safety-critical boards. This is NOT secure!
-  
-Authors:
-- Chadlia Jerad
-- Shaokai Lin
 """
 
 import argparse

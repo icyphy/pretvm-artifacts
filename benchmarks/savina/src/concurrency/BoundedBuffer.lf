@@ -14,10 +14,6 @@
  * consumers don't become available again immediately after consuming (at a
  * later tag). Therefore, this benchmark still implements most of
  * synchronization logic of the original manager in the Akka version.
- *
- * @author Christian Menard
- * @author Hannes Klein
- * @author Matt Chorlian
  */
 
  target C {

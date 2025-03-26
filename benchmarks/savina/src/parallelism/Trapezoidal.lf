@@ -7,10 +7,6 @@
  * github.com/hnnskl/lingua-franca/blob/dev-savina-cpp/benchmark/Cpp/Savina/trapezoid/TrapezoidalBenchmarkGenerator.lf
  *
  * This version also does not use the BenchmarkRunner.
- *
- * @author Hannes Klein
- * @author Soroush Bateni
- * @author Shaokai Lin
  */
 
 target C {
