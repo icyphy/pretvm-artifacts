@@ -90,6 +90,7 @@ for i, (module, data) in enumerate(results.items()):
         ax.set_title('Release time')
     if i == 3:
         ax.set_xlabel(u'Time (\u03bcs)')
+    ax.set_ylabel(module, rotation=90)
 
     ax = axs[i][1]
     exec_time_mean = statistics.mean(data["exec_time"])
@@ -104,7 +105,6 @@ for i, (module, data) in enumerate(results.items()):
         ax.set_title('Execution time')
     if i == 3:
         ax.set_xlabel(u'Time (\u03bcs)')
-    ax.set_ylabel(module, rotation=90)
 
 
 plt.tight_layout()
