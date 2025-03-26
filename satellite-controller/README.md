@@ -8,7 +8,7 @@ docker run -ti -v ${PWD}/docker/:/root/rtas25/ -v ${PWD}:/root/rtas25/satellite-
 
 
 # Plot results
-After running the program generating a `result.txt` run
+After running the program generating a `results.txt` (the one used in the paper is already checked into this repo) run
 ```
 python3 scripts/plotSatellite.py results.txt .
 ```
