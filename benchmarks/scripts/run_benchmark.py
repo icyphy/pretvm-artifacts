@@ -2,44 +2,71 @@
 
 """
 This utility collects and processes tracing data of LF benchmarks running on top
-of a RPi4. A logic analyzer is used to collect the traces.
+of a RPi4. A logic analyzer can be used to collect the traces, otherwise, the LF
+tracing mechasim is used.
+The supported operation systems for the RPi4 are Raspbian and QNX. The utility 
+
 The configuration includes:
     - The general purpose machine (called `host`) on top of which this utility 
       will run. The C code of the LF program will be generated on the host, 
       without being compiled. 
-    - The embedded machine (a RPi4) on top of which the C generated code will
-      be compiled and will be executed is connected to same local network as.
-      It is denoted later on as the remote host.
-    - A logical analyzer will be connected to the host via USB, and to the remote 
-      host via its pins. 
+    - The embedded machine (a RPi4, called `remote`) on top of which the programs 
+      will be run. The behavior is platform dependent:
+        - In case of Raspbian: the C generated code will be copied to the remote, 
+          compiled and will be executed. The generated `.lft` files will also be 
+          converted into `.csv` on the remote, using `trace_to_csv` utility. Then, 
+          the generated csv files will be copied back to the host.
+        - In case of QNX: the C generated code will be cross-compiled on the host,
+          then copied to the remote and executed. The generated `.lft` files will be
+          copied to the host, and the `trace_to_csv` utility will be run on the host 
+          to convert the `.lft` files into `.csv` files.
+        - In both cases, thecolected `.csv` files will be stored in a directory that 
+          is given as an argument to the script. 
+    - In case, a logical analyzer is use, it will be connected to the host via USB, 
+      and to the remote via its pins. 
 
 Assumptions:
-    - The startup and shutdown of the main reactor includes initializing and 
-      finalyzing the remote host GPIO
-    - Reactions include the needed trace instructions (toggling pins)
-    - The LF program `cmake-include`s `pigpio.txt`. This links the needed library.
-    - Every program has a companion csv file that describes the signals to trace.
-      This is useful for processing the collected tracing data.
+    - When using a logic analyser:
+        - The host machine is a Linux machine (Ubuntu 20.04)
+        - The startup and shutdown of the main reactor includes initializing and 
+          finalyzing the remote host GPIO
+        - Reactions include the needed trace instructions (toggling pins)
+        - The LF program `cmake-include`s `pigpio.txt`. This links the needed library.
+        - Every program has a companion csv file that describes the signals to trace.
+          This is useful for processing the collected tracing data.
+    - If the platform is QNX, it is assumed that:
+        - The QNX support files are located under `benchmarks/timing/src/qnxSupport/`
+        - The QNX toolchain is installed on the host machine.
+        - The script (`qnxsdp-env.sh`) will already be ran on the terminal, before creating 
+          the virtual environment. It is meant to set the environment variables (e.g., PATH,
+          QNX_HOST, QNX_TARGET) needed to use the QNX Software Development Platform (SDP).
+          This step ensures that QNX tools and compilers are accessible in the terminal 
+          session.
+        - EGS is installed on the host machine and the `egs.py` is made executable and added 
+          to the PATH.
 
-Procedure description:
-1. Process the arguments to retreive necessary information about the remote 
-   host device.
-2. Connect to the host device. If unable to connect, then abort. Else, clean.
-3. Initialize the Logic 2 analyzer software
+Procedure description (some of steps are optional, or platform dependent):
+1. Process the arguments to retreive necessary information about the remote device.
+2. Connect to the remote device. If unable to connect, then abort. Else, clean.
+3. (Optional) Initialize the Logic 2 analyzer software 
 4. For every LF program under src/ do:
     4.1. LF compile the program with --no-compile option
-    4.2. Secure copy the generated directory 
-    4.3. Remotely run from that directory:
-        - `mkdir build && cd build`
-        - `cmake ../`
-        - `make`
-    4.4. Start capturing the trace in the host (or if tracing is used, do nothing.)
-    4.5. Run the program in the remote host as a superuser
-    4.6. Run tracing remotely to get a non-empty trace file.
-    4.7. Once done, stop the analyser software and save the tracing data (or if
+    4.2. If not QNX: secure copy the generated directory to the remote.
+    4.3. If not QNX: Remotely compile (cmake and make) each program. (). run from ethat directory:
+         If QNX: Corss-compile the program and copy the generated file to the remote.
+    4.4. (Optional) Start capturing the trace in the host (or if tracing is used, do nothing.)
+    4.5. Remotely run all programs (check first if a superuser privilege is needed)
+    4.6. If not QNX: Run tracing remotely to get a non-empty trace files and generate csv. 
+            Then secury copy the csv files to the host.
+         If QNX: Secure copy the generated trace files to the host, then convert them to csv (on the host).
+            NOTE: A strange behavior was observed when secure copying the binary `.lft` files
+            from the remote to the host. The files were empty. The same command, when ran from the terminal
+            instead of the python script, is correct. As a workaround, the `.lft` files were renamed as 
+              `.txt` files on the remote, transfered, and the renamed again ad `.lft` in the host.
+    4.7. (Optional) Once done, stop the analyser software and save the tracing data (or if
     tracing is used, scp trace data back to host.)
     4.8. Close connection to remote host
-6. Process the tracing data
+5. (Optional) Process the tracing data
 
 Dependencies:
 - sshpass (for allowing passing in password on the commandline)
