@@ -83,6 +83,7 @@ import os
 from datetime import datetime
 from pathlib import Path
 import glob
+import time
 
 # Define the arguments to pass in the command line
 # The values default to
@@ -213,6 +214,65 @@ def host_compile_lf_files_in_dir(args, dir, selected, excluded):
                     host_compile_lf_file(args, file_path)
 
 
+def host_cross_compile_qnx_lf_file(args, host_src_gen):
+    # cwd = os.getcwd()
+
+    print("Copying QNX support files to src-gen: " + host_src_gen)
+    cmd = ["cp", "-r", args.qnx_support_directory, host_src_gen]
+    result = host_execute_cmd(cmd)
+    cmd = ["cp", args.qnx_support_directory+"/../qnxToolchain.cmake", host_src_gen]
+    result = host_execute_cmd(cmd)
+
+    # Change to the src-gen directory
+    print(f"Changing directory to: {host_src_gen}")
+    os.chdir(host_src_gen)
+
+    # Create build directory
+    print("Creating build directory")
+    os.makedirs("build", exist_ok=True)
+    os.chdir("build")
+
+    # Compile
+    print("Compiling with cmake then make using QNX toolchain." )
+    cmd = ["cmake", "-DCMAKE_TOOLCHAIN_FILE=../qnxToolchain.cmake", "../"]
+    host_execute_cmd(cmd)
+    cmd = ["make"]
+    result = host_execute_cmd(cmd)
+    program_name = os.path.basename(host_src_gen)
+    if result.returncode == 0:
+        print("Successfully compiled ", program_name)
+    else:
+        print("Error compiling ", program_name, result.stderr)
+        return
+    
+    # Copy the executable to bin
+    print("Moving executable to bin/ directory.")
+    os.makedirs("../../../bin", exist_ok=True)
+
+    # Construct the source and destination paths
+    program_path = os.path.join(host_src_gen, "build", program_name)
+    bin_dir = os.path.abspath(os.path.join(host_src_gen, "../../bin"))
+    destination_path = os.path.join(bin_dir, program_name)
+
+    # Copy the program to the bin directory
+    print("Copy executable to bin directory")
+    cmd = ["cp", program_path, destination_path]
+    result = subprocess.run(cmd, capture_output=True, text=True)
+
+    if result.returncode != 0:
+        print(f"Error copying {program_name}: {result.stderr}")
+    else:
+        print(f"Successfully copied {program_name} to {bin_dir}")
+    # os.chdir(cwd)
+
+
+def host_cross_compile_qnx_lf_files_in_dir(args, dir):
+    # Enumerate over directories in dir (should be src-gen)
+    for entry in os.scandir(dir):
+        if entry.is_dir():  # Check if it's a directory
+            host_cross_compile_qnx_lf_file(args, entry.path)
+
+
 def host_connect_to_remote(args):
     try:
         # When automated on a runner, it is possible to use client.load_system_host_keys()
@@ -279,6 +339,26 @@ def host_scp_dir(src, dest, args, from_host_to_remote=True):
         print(f"Error copying {_src} to {_dest}: {result.stderr}")
 
 
+def host_scp_exec_files(src, dest, args):
+    _src = src
+    _dest = dest
+    remote_prefix = f"{args.username}@{args.hostname}:"
+    _dest = remote_prefix + _dest
+
+    # List all files in the source directory
+    files_to_copy = glob.glob(os.path.join(_src, "*"))
+
+    # Copy each file separately
+    for file in files_to_copy:
+        print(f"Copying {file} to {_dest}")
+        scp_command = ["sshpass", "-p", args.password, "scp", file, _dest]
+        result = host_execute_cmd(scp_command)
+        if result.returncode == 0:
+            print(f"Successfully copied.")
+        else:
+            print(f"Error copying.")
+
+
 def host_process_trace_data():
     return 1
 
@@ -327,6 +407,36 @@ def remote_forall_subdirs_do(func, dir, arg1=None, arg2=None, arg3=None):
     print(dirs)
     for _dir in dirs:
         func(_dir, arg1, arg2, arg3)
+
+def remote_run_all_programs_qnx(dir, dir_data):
+    # Get all executable LF programs in the directory
+    find_command = f"find {dir} -maxdepth 1 -type f -executable"  # List all files under the remote dir.
+    _, stdout, _ = remote_execute_cmd(find_command)
+    output = stdout.read().decode("utf-8").strip()
+
+    files = output.splitlines()
+    files = [file.strip() for file in files]  # Fixing incorrect variable reference
+
+    print("Found files:", files)
+
+    for _file in files:
+        # Get the basename
+        cmd = f"basename {_file}"
+        _, stdout, _ = remote_execute_cmd(cmd) 
+        filename = stdout.read().decode("utf8").strip()
+
+        # Run the program
+        _,stdout,_ = remote_execute_cmd(_file)
+        # Oddly, it is needed to print the program output here, to allow for proper execution
+        # of the commands!
+        print(f">>>>> Output of {filename} start:")
+        print(stdout.read().decode("utf8").strip())
+        print(f">>>>> Output of {filename} end.")
+        
+        # Rename the .lft file to that we know which is which,
+        # and move it to the benchmarks-data directory
+        cmd = f"mv main_0.lft {dir_data}/{filename}.txt"
+        remote_execute_cmd(cmd) 
 
 
 def remote_print(stdout_or_stderr, is_err=False):
@@ -406,6 +516,7 @@ def main(args=None):
     # Host directories
     host_src = benchmarks_dir / args.src
     host_src_gen = benchmarks_dir / args.src_gen
+    host_bin = benchmarks_dir / "timing/bin"
     host_data = benchmarks_dir / "data"
 
     # Remote directories
@@ -444,11 +555,18 @@ def main(args=None):
         if not args.no_scp:
             remote_rm_dir(remost_dest)
             remote_create_dir(remost_dest)
-            host_forall_subdirs_do(host_scp_dir, host_src_gen, remost_dest, args, True)
-
+            if (args.platform != "QNX"):
+                host_forall_subdirs_do(host_scp_dir, host_src_gen, remost_dest, args, True)
+            
         # Step 4.3
         if not args.no_cmake:
-            remote_forall_subdirs_do(remote_compile_cmake_project, remost_dest)
+            if (args.platform != "QNX"):
+                remote_forall_subdirs_do(remote_compile_cmake_project, remost_dest)
+            else:
+                # Cross compile the LF programs
+                host_cross_compile_qnx_lf_files_in_dir(args, host_src_gen)
+                # Secure copy the generated file from src-gen/../build to the remote host
+                host_scp_exec_files(host_bin, remost_dest, args)
 
         # Step 4.4
         # Skipped. Assuming tracing is in use
@@ -457,21 +575,45 @@ def main(args=None):
             # Step 4.5: run programs and collect trace files in a remote data directory.
             remote_rm_dir(remote_data)
             remote_create_dir(remote_data)
-            remote_forall_subdirs_do(func=remote_run_program, dir=remost_dest, arg1=remote_data, arg2=args)
-            
-            # Step 4.6: run tracing remotely
+            if (args.platform != "QNX"):
+                remote_forall_subdirs_do(func=remote_run_program, dir=remost_dest, arg1=remote_data, arg2=args)
+            else:
+                remote_run_all_programs_qnx(remost_dest, remote_data)
+                
+            # Step 4.6: run tracing remotely, if not a QNX platform
             if not args.no_tracing:
-                convert_for_chrome = True
-                remote_forall_files_in_dir_do(remote_run_trace_conversion, remote_data, remote_data, convert_for_chrome)
+                if (args.platform != "QNX"):
+                    convert_for_chrome = True
+                    remote_forall_files_in_dir_do(remote_run_trace_conversion, remote_data, remote_data, convert_for_chrome)
+                    
+                    # Step 4.7
+                    host_create_dir(host_data)
 
-                # Step 4.7
-                host_create_dir(host_data)
-
-                if args.data_dir is None:
-                    data_entry_dir = host_data / time
+                    if args.data_dir is None:
+                        data_entry_dir = host_data / time
+                    else:
+                        data_entry_dir = args.data_dir
+                    host_scp_dir(remote_data, data_entry_dir, args, from_host_to_remote=False)
                 else:
-                    data_entry_dir = args.data_dir
-                host_scp_dir(remote_data, data_entry_dir, args, from_host_to_remote=False)
+                    # Step 4.7
+                    if args.data_dir is None:
+                        data_entry_dir = host_data / time
+                    else:
+                        data_entry_dir = args.data_dir
+                    host_scp_dir(remote_data, data_entry_dir, args, from_host_to_remote=False)
+
+                    # Now, run trace-to-csv on the host
+                    # Note that files were transformed as txt files
+                    os.chdir(data_entry_dir)
+                    for txt_file in os.listdir(data_entry_dir):
+                        if txt_file.endswith(".txt"):
+                            lft_file = os.path.splitext(txt_file)[0] + ".lft"
+                            # Rename the file
+                            os.rename(txt_file, lft_file) 
+                            # Now, run trace_to_csv
+                            cmd = ["trace_to_csv", lft_file]
+                            host_execute_cmd(cmd)
+                            print("Converted: " + lft_file)
             
             # If this is true, we are doing performance benchmarking.
             # Copy the txt file back to host.
