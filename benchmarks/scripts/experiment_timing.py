@@ -19,7 +19,7 @@ import credentials
 
 ################## CONFIGS ##################
 
-# Platform config: RPI4, ODROID-XU4
+# Platform config: RPI4 (default), ODROID-XU4, QNX
 PLATFORM = "RPI4"
 
 # FIXME: This is completely useless!
@@ -52,17 +52,6 @@ FPS             = 5
 
 #############################################
 
-if PLATFORM == "RPI4":
-    IP = credentials.IP_RPI4
-    UN = credentials.UN_RPI4
-    PW = credentials.PW_RPI4
-elif PLATFORM == "ODROID-XU4":
-    IP = credentials.IP_ODROID
-    UN = credentials.UN_ODROID
-    PW = credentials.PW_ODROID
-else:
-    raise Exception("The specified platform is not supported.")
-
 parser = argparse.ArgumentParser()
 parser.add_argument(
     "-ed",
@@ -70,6 +59,39 @@ parser.add_argument(
     type=str,
     help="Specify an existing experiment directory and run post processing only. E.g., timing/2024-03-03_23-18-51"
 )
+parser.add_argument(
+    "-pl",
+    "--platform",
+    type=str,
+    default="RPI4",
+    help="Specify the platform to run the experiment: RPI4, ODROID or QNX. The default is RPI4."
+)
+parser.add_argument(
+    "-qd",
+    "--qnx-support-directory",
+    type=str,
+    default="timing/src/qnxSupport/low_level_platform",
+    help="Specify the directory containing QNX support files."
+)
+
+
+def set_platform(platform):
+    if platform == "RPI4":
+        IP = credentials.IP_RPI4
+        UN = credentials.UN_RPI4
+        PW = credentials.PW_RPI4
+    elif platform == "ODROID-XU4":
+        IP = credentials.IP_ODROID
+        UN = credentials.UN_ODROID
+        PW = credentials.PW_ODROID
+    elif platform == "QNX":
+        IP = credentials.IP_QNX
+        UN = credentials.UN_QNX
+        PW = credentials.PW_QNX
+    else:
+        raise Exception("The specified platform is not supported.")
+    return IP, UN, PW, platform
+
 
 def post_process_timing_precision(csv):
     try:
@@ -547,6 +569,7 @@ def generate_latex_table(program_names, program_stats, file_path):
 def main(args=None):
     # Parse arguments.
     args = parser.parse_args(args)
+    IP, PW, UN, PLATFORM = set_platform(args.platform)
     
     # Variable declarations
     expr_data_dirname = "experiment-data/"
@@ -589,9 +612,15 @@ def main(args=None):
     
     if args.experiment_dir is None:
         # Prepare arguments for each run_benchmark call.
-        args_1 = ["-hn=" + IP, "-un=" + UN, "-pwd=" + PW, "-f=--scheduler=NP", "-dd="+str(np_dir.resolve()), "--src=timing/src", "--src-gen=timing/src-gen"]
-        args_2 = ["-hn=" + IP, "-un=" + UN, "-pwd=" + PW, "-f=--scheduler=STATIC", "-f=--mapper=LB", "-dd="+str(lb_dir.resolve()), "--src=timing/src", "--src-gen=timing/src-gen"]
-        args_3 = ["-hn=" + IP, "-un=" + UN, "-pwd=" + PW, "-f=--scheduler=STATIC", "-f=--mapper=EGS", "-dd="+str(egs_dir.resolve()), "--src=timing/src", "--src-gen=timing/src-gen"]
+        args_1 = ["-hn=" + IP, "-un=" + UN, "-pwd=" + PW, "-pl=" + PLATFORM, "-f=--scheduler=NP", "-dd="+str(np_dir.resolve()), "--src=timing/src", "--src-gen=timing/src-gen"]
+        args_2 = ["-hn=" + IP, "-un=" + UN, "-pwd=" + PW, "-pl=" + PLATFORM, "-f=--scheduler=STATIC", "-f=--mapper=LB", "-dd="+str(lb_dir.resolve()), "--src=timing/src", "--src-gen=timing/src-gen"]
+        args_3 = ["-hn=" + IP, "-un=" + UN, "-pwd=" + PW, "-pl=" + PLATFORM, "-f=--scheduler=STATIC", "-f=--mapper=EGS", "-dd="+str(egs_dir.resolve()), "--src=timing/src", "--src-gen=timing/src-gen"]
+        if PLATFORM == "QNX":
+            qnx_support_directory = Path(args.qnx_support_directory).resolve()
+            args_1.append("-qd=" + str(qnx_support_directory))
+            args_2.append("-qd=" + str(qnx_support_directory))
+            args_3.append("-qd=" + str(qnx_support_directory))
+        
         if DASH_MODE:
             args_2.append("-f=--dash")
             args_3.append("-f=--dash")

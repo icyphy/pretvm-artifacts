@@ -78,11 +78,11 @@ import paramiko  # pip install paramiko
 
 # from saleae import automation   # pip install logic2-automation
 import sys
-import csv
 import subprocess
 import os
 from datetime import datetime
 from pathlib import Path
+import glob
 
 # Define the arguments to pass in the command line
 # The values default to
@@ -156,6 +156,20 @@ parser.add_argument(
 )
 parser.add_argument("-nr", "--no-run", action="store_true", help="Skip running the compiled programs.")
 parser.add_argument("-np", "--no-parse", action="store_true", help="Skip conversion of traces to csv")
+parser.add_argument(
+    "-pl",
+    "--platform",
+    type=str,
+    default="RPI4",
+    help="Specify the platform to run the experiment: RPI4, ODROID or QNX. The default is RPI4."
+)
+parser.add_argument(
+    "-qd",
+    "--qnx-support-directory",
+    type=str,
+    help="Specify the directory containing QNX support files."
+)
+
 # Creat the SSh client
 client = paramiko.SSHClient()
 # Veryfing host keys
@@ -355,7 +369,7 @@ def remote_run_program(dir, data_dir, command_line_args, arg3=None):
     _, stdout, stderr = remote_execute_cmd(cmd)
     remote_print(stdout)
     remote_print(stderr, is_err=True)
-    
+
 
 def remote_run_trace_conversion(file, dir, convert_for_chrome=False, arg3=None):
     convert_command = f"cd {dir} && trace_to_csv {file}"
