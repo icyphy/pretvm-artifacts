@@ -11,7 +11,6 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import shutil
 import imageio
-import os
 
 # NOTE: Ensure that there is a credentials.py that defines the IP, username, and
 # password of the target platform.
@@ -296,7 +295,7 @@ def combine_df(df_np, df_lb, df_egs):
     
     return combined_df
 
-def generate_plot_timing_precision(plots_dir, program, df):
+def generate_plot_timing_precision(plots_dir, program, df, platform):
 
     # Now, 'combined_df' contains only groups with data
     plt.figure(figsize=(12, 8))
@@ -337,7 +336,7 @@ def generate_plot_timing_precision(plots_dir, program, df):
     plt.tight_layout()
     
     # Save the plot
-    plt.savefig(f"{plots_dir}/{program}_timing_precision.svg", format='svg')
+    plt.savefig(f"{plots_dir}/{program}_timing_precision_{platform}.svg", format='svg')
 
 def generate_group_statistics(df, plots_dir, program):
     # Calculate means, standard deviations, and maxes for all groups.
@@ -364,7 +363,7 @@ def generate_program_statistics(df):
 
     return aggregated_stats
 
-def generate_plot_timing_accuracy(plots_dir, program, df):
+def generate_plot_timing_accuracy(plots_dir, program, df, platform, box_or_flame):
     
     # Sample in case data set is very large.
     n_samples = min(len(df), 10000)
@@ -373,7 +372,10 @@ def generate_plot_timing_accuracy(plots_dir, program, df):
     # Now, 'combined_df' contains only groups with data
     plt.figure(figsize=(12, 8))
     hue_order = ['DY', 'LB', 'EGS']
-    ax = sns.stripplot(x='Group', y='Lag', hue='Dataset', hue_order=hue_order, palette='flare', data=sampled_df, size=7, jitter=True, dodge=True)
+    if (box_or_flame):
+        ax = sns.boxplot(x='Group', y='Lag', hue='Dataset', palette='flare', data=sampled_df, flierprops={'markersize': 3}, width=0.6, dodge=True)
+    else:
+        ax = sns.stripplot(x='Group', y='Lag', hue='Dataset', hue_order=hue_order, palette='flare', data=sampled_df, size=7, jitter=True, dodge=True)        
     
     # Generate and save statistics to JSON
     stats_df = generate_group_statistics(df, plots_dir, program)
@@ -409,9 +411,12 @@ def generate_plot_timing_accuracy(plots_dir, program, df):
     plt.tight_layout()
     
     # Save the plot
-    plt.savefig(f"{plots_dir}/{program}_timing_accuracy.svg", format='svg')
+    if (box_or_flame):
+        plt.savefig(f"{plots_dir}/{program}_timing_accuracy_{platform}_box.svg", format='svg')
+    else:
+        plt.savefig(f"{plots_dir}/{program}_timing_accuracy_{platform}_flame.svg", format='svg')
 
-def generate_plot_reaction_execution_time(plots_dir, program, df):    
+def generate_plot_reaction_execution_time(plots_dir, program, df, platform):    
     plt.figure(figsize=(12, 8))
     ax = sns.boxplot(x='Group', y='Execution Time', hue='Dataset', data=df, palette="Set2")
     
@@ -436,9 +441,9 @@ def generate_plot_reaction_execution_time(plots_dir, program, df):
     plt.tight_layout()
     
     # Save the plot
-    plt.savefig(f"{plots_dir}/{program}_execution_time.svg", format='svg')
+    plt.savefig(f"{plots_dir}/{program}_execution_time_{platform}.svg", format='svg')
     
-def generate_plot_vm_execution_time(plots_dir, program, df):
+def generate_plot_vm_execution_time(plots_dir, program, df, platform):
     plt.figure(figsize=(12, 8))
     ax = sns.boxplot(x='Group', y='Instruction Execution Time', data=df, palette="Set2")
 
@@ -463,7 +468,7 @@ def generate_plot_vm_execution_time(plots_dir, program, df):
     plt.tight_layout()
     
     # Save the plot
-    plt.savefig(f"{plots_dir}/{program}_vm_execution_time.svg", format='svg')
+    plt.savefig(f"{plots_dir}/{program}_vm_execution_time_{platform}.svg", format='svg')
 
 def create_animation_timing_accuracy(program, df_np, df_lb, plots_dir, frames_dir, gif_name, num_frames=50, fps=5):
     # Ensure directories exist
@@ -693,7 +698,7 @@ def main(args=None):
         df_lb_timing_precision = post_process_timing_precision(csv_lb)
         df_egs_timing_precision = post_process_timing_precision(csv_egs)
         df_combined = combine_df(df_np_timing_precision, df_lb_timing_precision, df_egs_timing_precision)
-        generate_plot_timing_precision(plots_dir, program, df_combined)
+        generate_plot_timing_precision(plots_dir, program, df_combined, PLATFORM)
         
         #################################
         # Generate timing accuracy plot #
@@ -702,7 +707,8 @@ def main(args=None):
         df_lb_timing_accuracy = post_process_timing_accuracy(csv_lb)
         df_egs_timing_accuracy = post_process_timing_accuracy(csv_egs)
         df_combined = combine_df(df_np_timing_accuracy, df_lb_timing_accuracy, df_egs_timing_accuracy)
-        generate_plot_timing_accuracy(plots_dir, program, df_combined)
+        generate_plot_timing_accuracy(plots_dir, program, df_combined, PLATFORM, True)
+        generate_plot_timing_accuracy(plots_dir, program, df_combined, PLATFORM, False)
         
         # Extract outliers
         if df_np_timing_accuracy is not None:
@@ -736,13 +742,13 @@ def main(args=None):
         df_lb_reaction_exec = post_process_execution_time(csv_lb)
         df_egs_reaction_exec = post_process_execution_time(csv_egs)
         df_combined_reaction_exec = combine_df(df_np_reaction_exec, df_lb_reaction_exec, df_egs_reaction_exec)
-        generate_plot_reaction_execution_time(plots_dir, program, df_combined_reaction_exec)
+        generate_plot_reaction_execution_time(plots_dir, program, df_combined_reaction_exec, PLATFORM)
         
         ####################################
         # Generate PretVM instruction plot #
         ####################################
         df_lb_vm_exec = post_process_instruction_execution_times(csv_lb)
-        generate_plot_vm_execution_time(plots_dir, program, df_lb_vm_exec)
+        generate_plot_vm_execution_time(plots_dir, program, df_lb_vm_exec, PLATFORM)
 
     generate_latex_table(program_names, program_stats, expr_run_dir / "table.tex")
 
