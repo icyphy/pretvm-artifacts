@@ -1,10 +1,10 @@
 target C {
   scheduler: {
     type: STATIC,
-    mapper: EGS
+    mapper: LB
   },
   build-type: Release,
-  platform: FlexPRET,
+  //platform: FlexPRET,
   cmake-include: "SatelliteAttitudeController.cmake",  // logging: Debug,
   workers: 2,
   timeout: 1100001 usec
@@ -104,7 +104,8 @@ reactor Motor(lfDeadline: time = 100 usec) {
 
       EXEC_END();
     =} deadline(lfDeadline) {=
-        lf_print_error_and_exit("deadline missd in Motor lag=" PRINTF_TIME, LAG());
+        lf_print("deadline missd in Motor lag=" PRINTF_TIME, LAG());
+        //lf_print_error_and_exit("deadline missd in Motor lag=" PRINTF_TIME, LAG());
     =}
 
   @wcet("1 msec")
@@ -126,6 +127,7 @@ reactor UserInput {
 reactor SensorFusion {
   input gyro1: IntVec3
   input gyro2: IntVec3
+  input gyro3: IntVec3
   output angle: IntVec3
   output angular_speed: IntVec3
 
@@ -154,13 +156,13 @@ reactor SensorFusion {
   =}
 
   @wcet("62 usec")
-  reaction(gyro1, gyro2) -> angle, angular_speed {=
+  reaction(gyro1, gyro2, gyro3) -> angle, angular_speed {=
     PRINT_LAG(SensorFusion);
     EXEC_BEGIN();
     #ifndef NDEBUG
-    lf_print("Got gyro1=[%i %i %i] gyro2=[%i %i %i]", gyro1->value.x, gyro1->value.y, gyro1->value.z, gyro2->value.x, gyro2->value.y, gyro2->value.z);
+    lf_print("Got gyro1=[%i %i %i] gyro2=[%i %i %i] gyro3=[%i %i %i]", gyro1->value.x, gyro1->value.y, gyro1->value.z, gyro2->value.x, gyro2->value.y, gyro2->value.z, gyro3->value.x, gyro3->value.y, gyro3->value.z);
     #endif
-    sensor_fusion_reaction(&self->_state, &gyro1->value, &gyro2->value, &angle->value, &angular_speed->value);
+    sensor_fusion_reaction(&self->_state, &gyro1->value, &gyro2->value, &gyro3->value, &angle->value, &angular_speed->value);
     lf_set_present(angle);
     lf_set_present(angular_speed);
     EXEC_END();
@@ -198,7 +200,8 @@ reactor Gyroscope(id: int = 0, period: time = 1 ms, lfDeadline: time = 1 usec) {
     EXEC_END();
     lf_set_present(out);
   =} deadline(lfDeadline) {=
-    lf_print_error_and_exit("deadline missed in Gyro, lag=%d", LAG());
+    lf_print("deadline missd in Motor lag=" PRINTF_TIME, LAG());
+    //lf_print_error_and_exit("deadline missed in Gyro, lag=%d", LAG());
   =}
 
   @wcet("1 msec")
@@ -212,11 +215,14 @@ reactor Gyroscope(id: int = 0, period: time = 1 ms, lfDeadline: time = 1 usec) {
 main reactor {
   controller = new Controller()
   userInput = new UserInput()
-  gyro1 = new Gyroscope(period = 1 ms, lfDeadline = 20 usec)
+  gyro1 = new Gyroscope(id=0, period = 1 ms, lfDeadline = 20 usec)
   gyro2 = new Gyroscope(id=1, period = 1 ms, lfDeadline = 20 usec)
+  gyro3 = new Gyroscope(id=2, period = 1 ms, lfDeadline = 20 usec)
+
   motor = new Motor(lfDeadline = 300 usec)
   sensorFusion = new SensorFusion()
-  gyro1.out, gyro2.out -> sensorFusion.gyro1, sensorFusion.gyro2
+
+  gyro1.out, gyro2.out, gyro3.out -> sensorFusion.gyro1, sensorFusion.gyro2, sensorFusion.gyro3
   gyro1.dummyOut, gyro2.dummyOut -> sensorFusion.dummyIn1, sensorFusion.dummyIn2
   sensorFusion.angle -> controller.current_angle
   sensorFusion.angular_speed -> controller.current_angular_speed

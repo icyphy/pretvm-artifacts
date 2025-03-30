@@ -95,10 +95,15 @@ void gyro_reaction(IntVec3 *sample_ret) {
 
 void sensor_fusion_reaction(SensorFusionState *state,
                             IntVec3 *gyro1,
-                            IntVec3 *gyro2, IntVec3 *angle,
+                            IntVec3 *gyro2, 
+                            IntVec3 *gyro3, 
+                            IntVec3 *angle,
                             IntVec3 *angular_speed) {
-  IntVec3 gyro_avg = {(gyro1->x + gyro2->x) >> 1, (gyro1->y + gyro2->y) >> 1,
-                      (gyro1->z + gyro2->z) >> 1};
+  IntVec3 gyro_avg = {
+    divide((gyro1->x + gyro2->x + gyro3->x), 3), 
+    divide((gyro1->y + gyro2->y + gyro3->y), 3),                  
+    divide((gyro1->z + gyro2->z + gyro3->z), 3)
+  };
 
   angle->x = state->last_angle.x +
              (multiply(gyro_avg.x, state->delta_t) >> FIXED_POINT_FRACTION_BITS);

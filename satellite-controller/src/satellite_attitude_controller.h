@@ -24,7 +24,9 @@ void sensor_fusion_startup_reaction(SensorFusionState *state, int64_t delta_t);
 
 void sensor_fusion_reaction(SensorFusionState *state,
                             IntVec3 *gyro1,
-                            IntVec3 *gyro2, IntVec3 *angle,
+                            IntVec3 *gyro2,
+                            IntVec3 *gyro3, 
+                            IntVec3 *angle,
                             IntVec3 *angular_speed);
 
 typedef struct {
