@@ -1,70 +1,116 @@
 target C {
-  scheduler: {
-    type: STATIC,
-    mapper: EGS
-  },
+  //scheduler: {
+  //  type: STATIC,
+  //  mapper: LB
+  //},
   build-type: Release,
   platform: FlexPRET,
-  workers: 2,
-  timeout: 522 week // 10 years
+  workers: 4,
+  timeout: 522 week, // 10 years
+  //files: ["./satellite_attitude_controller.h", "./satellite_attitude_controller.c"]
 }
 
+preamble {=
+  #include "satellite_attitude_controller.h"
+=}
+
 reactor Controller(Kp_float: float = 0.3, Ki_float: float = 0.1, Kd_float: float = 0.0) {
-    input angle: IntVec3
-    input angular_speed: IntVec3
-    input desired_angle: IntVec3
-    output out: IntVec3
+    input angle: IntVec3*
+    input angular_speed: IntVec3*
+    output out: IntVec3*
 
-    @wcet("1 usec")
-    reaction(desired_angle) {= =}
-    @wcet("173 usec")
-    reaction(angle, angular_speed) -> out {= =} 
+    state controller_state: ControllerState
 
-    @wcet("1 msec")
-    reaction(shutdown)  {= =}
+    //X@wcet("3 usec")
+    reaction (startup) {=
+      controller_startup_reaction(&self->controller_state, self->Kp_float, self->Ki_float, self->Kd_float);  
+    =}
+
+    //X@wcet("173 usec")
+    reaction(angle, angular_speed) -> out {=
+      IntVec3* motor_ret = (IntVec3*)malloc(sizeof(IntVec3));
+      controller_run_reaction(&self->controller_state, &angle->value, &angular_speed->value, &motor_ret);
+      lf_set(out, motor_ret);
+    =}
+
+    //X@wcet("1 msec")
+    reaction(shutdown)  {==}
 }
 
 reactor Motor(lfDeadline: time = 100 usec) {
-    input in:IntVec3
-    @wcet("2 usec")
-    reaction(in) {= =} deadline(lfDeadline) {= =}
+    input in:IntVec3*
+    timer t(15msec, 15msec);
+
+    //X@wcet("2 usec")
+    reaction(in) {= 
+      motor_reaction(&in->value);  
+    =}
+
+    //X@wcet("2 usec")
+    reaction(t) {= 
+    =} deadline(lfDeadline) {= =}
 }
 
-reactor UserInput {
-    output out: IntVec3;
-    @wcet("1 usec")
-    reaction(startup) -> out {= =}
-}
+reactor Processing {
+    input gyro1: IntVec3*
+    input gyro2: IntVec3*
+    input gyro3: IntVec3*
+    output out_current_angle: IntVec3*
+    output out_angular_velocity: IntVec3*
 
-reactor SensorFusion {
-    input i1: IntVec3
-    input i2: IntVec3
-    output o1: IntVec3
-    output o2: IntVec3
+    timer t(15msec, 15msec);
 
-    @wcet("62 usec")
-    reaction(i1, i2) -> o1, o2 {= =}
+    state sensor_fusion_state: SensorFusionState
+    state angle: IntVec3
+    state angular_speed: IntVec3
+
+    reaction (startup) {=
+       sensor_fusion_startup_reaction(&self->sensor_fusion_state, MSEC(15));  
+    =}
+
+    //X@wcet("143 usec")
+    reaction(gyro1, gyro2, gyro3) {=
+      sensor_fusion_reaction(&self->sensor_fusion_state,
+                            &gyro1->value,
+                            &gyro2->value,
+                            &gyro3->value,
+                            &self->angle,
+                            &self->angular_speed);
+    =} deadline (2msec) {=
+      printf("received outdated sensor values!\n");
+    =}
+        
+        
+    //X@wcet("10 msec")
+    reaction (t) -> out_current_angle, out_angular_velocity {=
+      lf_set(out_current_angle, &self->angle);
+      lf_set(out_angular_velocity, &self->angular_speed);
+    =}
 }
 
 
 reactor Gyroscope(period: time =1ms, lfDeadline: time = 1 usec) {
     timer t(10msec, period)
-    output out: IntVec3
+    output out: IntVec3*
 
-    @wcet("21 usec")
-    reaction(t) -> out {= =}  deadline(lfDeadline) {= =}
+    //X@wcet("21 usec")
+    reaction(t) -> out {= 
+        IntVec3* sample_ret = (IntVec3*)malloc(sizeof(IntVec3));
+        gyro_reaction(sample_ret);
+        lf_set(out, sample_ret);
+    =}  deadline(lfDeadline) {= 
+    =}
 }
 
 main reactor {
-  gyro1 = new Gyroscope(period=1ms, lfDeadline=20 usec)
-  gyro2 = new Gyroscope(period=1ms, lfDeadline=20 usec)
-  userInput = new UserInput()
-  sensorFusion = new SensorFusion()
+  gyro1 = new Gyroscope(period=1ms, lfDeadline=100 usec)
+  gyro2 = new Gyroscope(period=1ms, lfDeadline=100 usec)
+  gyro3 = new Gyroscope(period=1ms, lfDeadline=100 usec)
+  sensorFusion = new Processing()
   controller = new Controller()
   motor = new Motor(lfDeadline=300 usec)
-  gyro1.out, gyro2.out -> sensorFusion.i1, sensorFusion.i2
-  sensorFusion.o1 -> controller.angle
-  sensorFusion.o2 -> controller.angular_speed
-  userInput.out -> controller.desired_angle
+  gyro1.out, gyro2.out, gyro3.out -> sensorFusion.gyro1, sensorFusion.gyro2, sensorFusion.gyro3
+  sensorFusion.out_current_angle -> controller.angle
+  sensorFusion.out_angular_velocity -> controller.angular_speed
   controller.out -> motor.in
 }

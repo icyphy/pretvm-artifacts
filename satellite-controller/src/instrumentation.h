@@ -1,8 +1,9 @@
 #ifndef INSTRUMENTATION_H
 #define INSTRUMENTATION_H
 
-// Conveneince macros for calculating the current lag
+// Convenience macros for calculating the current lag
 #define LAG() (rdtime() - ((uint32_t)lf_time_logical()))
+
 
 // Convenience macro for printing out the lag of a module. Uncomment to enable
 // #define PRINT_LAGS
@@ -14,10 +15,10 @@
 
 // Convenience macro to measure execution times of a module. Uncomment to enable
 #ifdef MEASURE_EXECUTION_TIMES
-#define EXEC_BEGIN() uint32_t __t1 = rdtime()
+#define EXEC_BEGIN() uint32_t __t1 = rdtime();
 #define EXEC_END()                                                             \
   do {                                                                         \
-    uint32_t __t2 = rdtime();                                                  \
+    uint32_t __t2 = dtime();                                                   \
     if (self->num_iter >= NUM_ITER) return;                                    \
     self->execution_time[self->num_iter] = __t2 - __t1;                        \
     self->completion_lag[self->num_iter] = __t2 - (uint32_t)lf_time_logical(); \
