@@ -1,8 +1,4 @@
-# Artifacts for the PRET Virtual Machine paper
-
-## TODOs
-- [ ] Bring EGS as a submodule here and document how to set it up using a virtual environment etc,
-- [ ] Create a FlexPRET config for the RTAS submission so others easily can build it  
+# Artifacts for Unified Quasi-Static Scheduling for Concurrent MoCs
 
 ## Getting started
 
@@ -79,4 +75,7 @@ You can either build the docker image yourself or pull it from dockerhub.
     $ ./analyse-all.sh
 ```
 
-TODO: we should also add the source links here and how to run the script to compile and do WCET analysis
+## TODOs
+- [ ] Bring EGS as a submodule here and document how to set it up using a virtual environment etc,
+- [ ] Create a FlexPRET config for the RTAS submission so others easily can build it  
+- [ ] we should also add the source links here and how to run the script to compile and do WCET analysis
