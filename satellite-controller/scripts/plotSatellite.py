@@ -72,12 +72,13 @@ bin_width = 7  # Define the bin width
 bins = range(global_min, global_max + bin_width, bin_width)
 
 # Create 3x3 subplots
-fig, axs = plt.subplots(4, 2, figsize=figsize)
+fig, axs = plt.subplots(2, 4, figsize=figsize)
+fig.subplots_adjust(hspace=0.12, wspace=0.3)
 # fig.suptitle('Satellite controller execution statistics')
 
 # Plot histograms for each module
 for i, (module, data) in enumerate(results.items()):
-    ax = axs[i][0]
+    ax = axs[0][i]
     start_mean = statistics.mean(data["start_time"])
     start_std = statistics.stdev(data["start_time"])
     print(f"{module} start_time_mean={start_mean} start_time_std={start_std}")
@@ -86,13 +87,13 @@ for i, (module, data) in enumerate(results.items()):
     if deadline > 0:
         ax.axvline(deadline, color='r', linestyle='solid', linewidth=1, label='Deadline')
         ax.legend(loc='upper right')
+    
     if i == 0:
-        ax.set_title('Release time')
-    if i == 3:
-        ax.set_xlabel(u'Time (\u03bcs)')
-    ax.set_ylabel(module, rotation=90)
+        ax.set_ylabel('Release time')
+    
+    #ax.set_xlabel(module)
 
-    ax = axs[i][1]
+    ax = axs[1][i]
     exec_time_mean = statistics.mean(data["exec_time"])
     exec_time_std = statistics.stdev(data["exec_time"])
     print(f"{module} exec_time_mean={exec_time_mean} exec_time_std={exec_time_std}")
@@ -101,12 +102,12 @@ for i, (module, data) in enumerate(results.items()):
     if wcet > 0:
         ax.axvline(wcet, color='r', linestyle='solid', linewidth=1, label='WCET')
         ax.legend(loc='upper right')
+    
     if i == 0:
-        ax.set_title('Execution time')
-    if i == 3:
-        ax.set_xlabel(u'Time (\u03bcs)')
+        ax.set_ylabel('Execution time')
 
+    ax.set_xlabel(module)
 
 plt.tight_layout()
 plt.savefig(f'{output}/satellite_controller_stats.pdf')
-# plt.show()
+plt.show()
